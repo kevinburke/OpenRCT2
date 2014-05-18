@@ -131,6 +131,107 @@ int ride_get_max_queue_time(rct_ride *ride)
 }
 
 /**
+ * rct2: 0x006B6456
+ *
+ * in this fn:
+ *     dl = i incrementing from 0 to MAX_RIDES
+ *     edi = ride measurement index (i multiplied by 0x4B0C)
+ *     ebx = ride_measurement object (p. sure only var_00 is used)
+ *     esi = not sure? sprite pointer
+ */
+void update_ride_measurements()
+{
+	int i;
+	int si;
+	int edx;
+	int plus50;
+	int ebp;
+
+	rct_ride_measurement *ride_measurement;
+	if (RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 2) {
+		return;
+	}
+	for (i = 0; i < MAX_RIDE_MEASUREMENTS; i++) {
+		ride_measurement = GET_RIDE_MEASUREMENT(i);
+		if (ride_measurement->var_00 == 0xff) {
+			continue;
+		}
+		if (RCT2_GLOBAL(0x01362AC8, uint32)[ride_measurement->var_00] & 1 == 0) {
+			continue;
+		}
+		if (RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] & 1 == 0) {
+			edx = 0;
+			// maybe this check is because some rides don't use all 8 ride
+			// measurements
+check_12629C0:
+			while(i >= RCT2_GLOBAL(0x013629C0, uint8)[ride_measurement->var_00]) {
+				si = RCT2_GLOBAL(0x0136297E, uint32)[ride_measurement->var_00 + 2*edx];
+				if (si == 0xffff) {
+					// loc 6B64D2
+					edx += 1;
+					// XXX goto check_12629C0
+					continue;
+				} else {
+					// loc 6B64D5
+					si = si<<8;
+					// XXX does this work? 
+					// see https://github.com/IntelOrca/OpenRCT2/issues/116
+					__asm add si, offset 0x10E63BC;
+					plus50 = RCT2_GLOBAL(si+0x50, uint8);
+					if (plus50 == 3 || plus50 == 0x16) {
+						edx += 1;
+						// XXX goto check_12629C0
+						continue;
+					}
+					RCT2_GLOBAL(0x0138B616, uint8)[i*0x4B0C] = i;
+					RCT2_GLOBAL(0x0138B617, uint8) = *(si+0x4b);
+
+					// set the first bit
+					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] |= 1;
+					// clear the second bit
+					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
+					break
+				}
+			}
+
+			// XXX, duplicates the load/comparison above
+			si = RCT2_GLOBAL(0x0136297E, uint32)[ride_measurement->var_00 + 2*edx];
+			if (si == 0xffff) {
+				continue;
+			}
+
+			// XXX also duplicates from above
+			si = si << 8;
+			// XXX does this work? 
+			// see https://github.com/IntelOrca/OpenRCT2/issues/116
+			__asm add si, offset 0x10E63BC;
+			ebp = RCT2_GLOBAL(0x0138B614, uint32)[i*0x4B0C];
+			plus50 = RCT2_GLOBAL(si+0x50, uint8);
+			if (RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] & 2 != 0) {
+				if (plus50 == 3 || plus50 == 0x16) {
+					// clear 2nd bit
+					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
+					if (i == RCT2_GLOBAL(0x0138B617, uint8)[i*0x4B0C]) {
+						RCT2_GLOBAL(0x0138B614, uint8)[i*0x4B0C] = 0;
+						ebp = 0;
+					}
+				} else {
+					continue;
+				}
+			}
+			// Code has a comparison for plus50 and 6 here.
+			if (plus50 != 6) {
+				// 6b6566
+			} else {
+				// set the second bit
+				RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] |= 2;
+				continue;
+			}
+		}
+	}
+}
+
+/**
  *
  *  rct2: 0x006ACA89
  */

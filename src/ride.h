@@ -95,6 +95,7 @@ typedef struct {
  * size: 0x04B0C
  */
 typedef struct {
+	// Index into the list of rides. 0xff if ride has no measurements
 	uint8 var_00;
 	uint8 pad_01[0x4B0B];
 } rct_ride_measurement;
