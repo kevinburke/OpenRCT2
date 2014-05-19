@@ -146,6 +146,7 @@ void update_ride_measurements()
 	int edx;
 	int plus50;
 	int ebp;
+	int ax;
 
 	rct_ride_measurement *ride_measurement;
 	if (RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 2) {
@@ -163,7 +164,6 @@ void update_ride_measurements()
 			edx = 0;
 			// maybe this check is because some rides don't use all 8 ride
 			// measurements
-check_12629C0:
 			while(i >= RCT2_GLOBAL(0x013629C0, uint8)[ride_measurement->var_00]) {
 				si = RCT2_GLOBAL(0x0136297E, uint32)[ride_measurement->var_00 + 2*edx];
 				if (si == 0xffff) {
@@ -174,9 +174,7 @@ check_12629C0:
 				} else {
 					// loc 6B64D5
 					si = si<<8;
-					// XXX does this work? 
-					// see https://github.com/IntelOrca/OpenRCT2/issues/116
-					__asm add si, offset 0x10E63BC;
+					si = si + RCT2_ADDRESS_SPRITE_LIST;
 					plus50 = RCT2_GLOBAL(si+0x50, uint8);
 					if (plus50 == 3 || plus50 == 0x16) {
 						edx += 1;
@@ -190,7 +188,7 @@ check_12629C0:
 					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] |= 1;
 					// clear the second bit
 					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
-					break
+					break;
 				}
 			}
 
@@ -202,9 +200,7 @@ check_12629C0:
 
 			// XXX also duplicates from above
 			si = si << 8;
-			// XXX does this work? 
-			// see https://github.com/IntelOrca/OpenRCT2/issues/116
-			__asm add si, offset 0x10E63BC;
+			si = si + RCT2_ADDRESS_SPRITE_LIST;
 			ebp = RCT2_GLOBAL(0x0138B614, uint32)[i*0x4B0C];
 			plus50 = RCT2_GLOBAL(si+0x50, uint8);
 			if (RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] & 2 != 0) {
@@ -222,6 +218,22 @@ check_12629C0:
 			// Code has a comparison for plus50 and 6 here.
 			if (plus50 != 6) {
 				// 6b6566
+				ax = *(si+0x36);
+				ax = ax >> 2;
+				if (ax == 0xD8 || ax == 0x7B || ax == 9 || ax == 0x3F || 
+						ax == 0x93 || ax == 0x9B) {
+					if (*(si+0x28) == 0) {
+						continue;
+					}
+				}
+				if (ebp > 0x12C0) {
+					// goto 6B66B9
+					if (RCT2_GLOBAL(0x00F663AC, uint32) == 1) {
+
+					}
+				} else {
+					
+				}
 			} else {
 				// set the second bit
 				RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] |= 2;

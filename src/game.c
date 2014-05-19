@@ -22,13 +22,14 @@
 #include "audio.h"
 #include "climate.h"
 #include "config.h"
-#include "rct2.h"
 #include "game.h"
 #include "finance.h"
 #include "news_item.h"
 #include "object.h"
 #include "osinterface.h"
 #include "peep.h"
+#include "rct2.h"
+#include "ride.h"
 #include "sawyercoding.h"
 #include "scenario.h"
 #include "screenshot.h"
@@ -153,7 +154,7 @@ void game_logic_update()
 	RCT2_CALLPROC_EBPSAFE(0x006674F7);	// update park
 	RCT2_CALLPROC_EBPSAFE(0x00684C7A);
 	RCT2_CALLPROC_EBPSAFE(0x006B5A2A);
-	RCT2_CALLPROC_EBPSAFE(0x006B6456);	// update ride measurements
+	update_ride_measurements();	// update ride measurements
 	RCT2_CALLPROC_EBPSAFE(0x0068AFAD);
 	RCT2_CALLPROC_EBPSAFE(0x006BBC6B);
 	RCT2_CALLPROC_EBPSAFE(0x006BD18A);
