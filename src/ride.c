@@ -23,6 +23,7 @@
 #include "sprite.h"
 #include "peep.h"
 #include "window.h"
+#include <stdio.h>
 
 
 #define GET_RIDE(x) (&(RCT2_ADDRESS(RCT2_ADDRESS_RIDE_LIST, rct_ride)[x]))
@@ -153,8 +154,10 @@ void update_ride_measurements()
 	if (RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 2) {
 		return;
 	}
+	std::cout << "Running ride measurements from C!";
 	for (i = 0; i < MAX_RIDE_MEASUREMENTS; i++) {
 		ride_measurement = GET_RIDE_MEASUREMENT(i);
+		// var_00 == bl
 		if (ride_measurement->var_00 == 0xff) {
 			continue;
 		}
@@ -170,7 +173,6 @@ void update_ride_measurements()
 				if (si == 0xffff) {
 					// loc 6B64D2
 					edx += 1;
-					// XXX goto check_12629C0
 					continue;
 				} else {
 					// loc 6B64D5
@@ -179,10 +181,8 @@ void update_ride_measurements()
 					plus50 = RCT2_GLOBAL(si+0x50, uint8);
 					if (plus50 == 3 || plus50 == 0x16) {
 						edx += 1;
-						// XXX goto check_12629C0
 						continue;
 					}
-					RCT2_ADDRESS(0x0138B616, uint8)[i*0x4B0C] = i;
 					RCT2_GLOBAL(0x0138B617, uint8) = *((int*)si+0x4b);
 
 					// set the first bit
