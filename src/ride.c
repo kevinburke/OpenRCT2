@@ -24,6 +24,8 @@
 #include "peep.h"
 #include "window.h"
 
+#include "stdlib.h"
+
 #define GET_RIDE(x) (&(RCT2_ADDRESS(RCT2_ADDRESS_RIDE_LIST, rct_ride)[x]))
 #define GET_RIDE_MEASUREMENT(x) (&(RCT2_ADDRESS(RCT2_ADDRESS_RIDE_MEASUREMENTS, rct_ride_measurement)[x]))
 
@@ -157,10 +159,10 @@ void update_ride_measurements()
 		if (ride_measurement->var_00 == 0xff) {
 			continue;
 		}
-		if (RCT2_GLOBAL(0x01362AC8, uint32)[ride_measurement->var_00] & 1 == 0) {
+		if (RCT2_ADDRESS(0x01362AC8, uint32)[ride_measurement->var_00] & 1 == 0) {
 			continue;
 		}
-		if (RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] & 1 == 0) {
+		if (RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] & 1 == 0) {
 			edx = 0;
 			// maybe this check is because some rides don't use all 8 ride
 			// measurements
@@ -227,12 +229,77 @@ void update_ride_measurements()
 					}
 				}
 				if (ebp > 0x12C0) {
-					// goto 6B66B9
-					if (RCT2_GLOBAL(0x00F663AC, uint32) == 1) {
-
+					// This variable is referred to a lot.
+					if (RCT2_GLOBAL(0x00F663AC, uint32) & 1) {
+						continue;
 					}
 				} else {
-					
+					if (RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] & 4) {
+						// 6B662A
+						sint32 eax = *(si+0x28);
+						eax = eax * 5;
+						eax = eax >> 0x10;
+						eax = abs(eax);
+
+						sint16 ax = eax & 0xffff;
+						if (ax > 0xff) {
+							ax = 0xff;
+
+							// Set lower 16 bits, without affecting higher ones
+							eax &= 0xffff00ff;
+							eax |= 0x00ff;
+						}
+						sint16 dx = *(si+0x12);
+						dx = dx >> 3;
+						if (dx < 0xff) {
+							dx = 0xff;
+						}
+						if (RCT2_GLOBAL(0x00F663AC, uint32) & 1) {
+							add_store_measurement(0x0138DB98, ax, ebp+i*0x4B0C);
+							add_store_measurement(0x0138EE58, dx, ebp+i*0x4B0C);
+						} else {
+							sint8 al = ax & 0xff;
+							sint8 dl = dx & 0xff;
+							// difference in addresses is exactly 0x4b0c
+							RCT2_GLOBAL(0x0138DB98, sint8)[ebp + i*0x4B0C] = al;
+							RCT2_GLOBAL(0x0138EE58, sint8)[ebp + i*0x4B0C] = dl;
+							ebp++;
+							uint16 bp = ebp & 0xffff;
+							if (bp <= RCT2_GLOBAL(0x0138B612, uint16)[i*0x4B0C]) {
+								RCT2_GLOBAL(0x0138B612, uint16)[i*0x4B0C] = bp;
+							}
+						}
+
+						if (RCT2_GLOBAL(0x00F663AC, uint32) & 1) {
+							RCT2_GLOBAL(0x0138B614, uint16)++;
+						}
+						continue;
+
+					} else {
+						// crazy branching subroutine
+						uint32 eax;
+						RCT2_CALLPROC_X(0x006D73D0, eax, 0, 0, edx, si, 0, 0);
+						sint16 ax = eax & 0xffff;
+						ax = ax >> 3;
+
+						sint16 dx = edx & 0xffff;
+						dx = dx >> 3;
+
+						if (ax >= 0xff81) {
+							ax = 0xff81;
+						}
+						if (ax < 0x7f) {
+							ax = 0x7f;
+						}
+
+						if (dx >= 0xff81) {
+							dx = 0xff81;
+						}
+						// XXX ?? this doesn't make any sense.
+						if (dx <= 0x7f) {
+							dx = 0x7f;
+						}
+					}
 				}
 			} else {
 				// set the second bit
@@ -241,6 +308,26 @@ void update_ride_measurements()
 			}
 		}
 	}
+}
+
+void add_store_measurement(int addr, sint16 initial_value, int idx);
+/**
+ * convenience function
+ *
+ * addr: address to read, store the value
+ * sint16 initial_value: what we've computed so far
+ * idx: ride measurement offset
+ */
+void add_store_measurement(int addr, sint16 initial_value, int idx) 
+{
+	uint16 cx = RCT2_GLOBAL(addr, uint16)[idx];
+	uint16 uax = initial_value;
+	uax += cx;
+	uax = uax >> 1;
+
+	uint8 al = uax & 0xff;
+	RCT2_GLOBAL(addr, uint8)[idx] = al;
+
 }
 
 /**
