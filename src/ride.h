@@ -263,5 +263,7 @@ int ride_get_max_queue_time(rct_ride *ride);
 void ride_init_all();
 void reset_all_ride_build_dates();
 void ride_update_favourited_stat();
+void update_ride_measurements();
+void add_store_measurement(int addr, sint16 initial_value, int idx);
 
 #endif

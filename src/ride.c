@@ -276,7 +276,7 @@ void update_ride_measurements()
 
 					} else {
 						// crazy branching subroutine
-						uint32 eax;
+						uint32 eax = 0;
 						RCT2_CALLPROC_X(0x006D73D0, eax, 0, 0, edx, si, 0, 0);
 						sint16 ax = eax & 0xffff;
 						ax = ax >> 3;
@@ -309,7 +309,7 @@ void update_ride_measurements()
 	}
 }
 
-void add_store_measurement(int addr, sint16 initial_value, int idx);
+
 /**
  * convenience function
  *
