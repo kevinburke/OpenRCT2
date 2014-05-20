@@ -166,8 +166,8 @@ void update_ride_measurements()
 			edx = 0;
 			// maybe this check is because some rides don't use all 8 ride
 			// measurements
-			while(i >= RCT2_GLOBAL(0x013629C0, uint8)[ride_measurement->var_00]) {
-				si = RCT2_GLOBAL(0x0136297E, uint32)[ride_measurement->var_00 + 2*edx];
+			while(i >= RCT2_ADDRESS(0x013629C0, uint8)[ride_measurement->var_00]) {
+				si = RCT2_ADDRESS(0x0136297E, uint32)[ride_measurement->var_00 + 2*edx];
 				if (si == 0xffff) {
 					// loc 6B64D2
 					edx += 1;
@@ -183,19 +183,19 @@ void update_ride_measurements()
 						// XXX goto check_12629C0
 						continue;
 					}
-					RCT2_GLOBAL(0x0138B616, uint8)[i*0x4B0C] = i;
+					RCT2_ADDRESS(0x0138B616, uint8)[i*0x4B0C] = i;
 					RCT2_GLOBAL(0x0138B617, uint8) = *(si+0x4b);
 
 					// set the first bit
-					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] |= 1;
+					RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] |= 1;
 					// clear the second bit
-					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
+					RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
 					break;
 				}
 			}
 
 			// XXX, duplicates the load/comparison above
-			si = RCT2_GLOBAL(0x0136297E, uint32)[ride_measurement->var_00 + 2*edx];
+			si = RCT2_ADDRESS(0x0136297E, uint32)[ride_measurement->var_00 + 2*edx];
 			if (si == 0xffff) {
 				continue;
 			}
@@ -203,14 +203,14 @@ void update_ride_measurements()
 			// XXX also duplicates from above
 			si = si << 8;
 			si = si + RCT2_ADDRESS_SPRITE_LIST;
-			ebp = RCT2_GLOBAL(0x0138B614, uint32)[i*0x4B0C];
+			ebp = RCT2_ADDRESS(0x0138B614, uint32)[i*0x4B0C];
 			plus50 = RCT2_GLOBAL(si+0x50, uint8);
-			if (RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] & 2 != 0) {
+			if (RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] & 2 != 0) {
 				if (plus50 == 3 || plus50 == 0x16) {
 					// clear 2nd bit
-					RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
-					if (i == RCT2_GLOBAL(0x0138B617, uint8)[i*0x4B0C]) {
-						RCT2_GLOBAL(0x0138B614, uint8)[i*0x4B0C] = 0;
+					RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
+					if (i == RCT2_ADDRESS(0x0138B617, uint8)[i*0x4B0C]) {
+						RCT2_ADDRESS(0x0138B614, uint8)[i*0x4B0C] = 0;
 						ebp = 0;
 					}
 				} else {
@@ -234,7 +234,7 @@ void update_ride_measurements()
 						continue;
 					}
 				} else {
-					if (RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] & 4) {
+					if (RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] & 4) {
 						// 6B662A
 						sint32 eax = *(si+0x28);
 						eax = eax * 5;
@@ -261,12 +261,12 @@ void update_ride_measurements()
 							sint8 al = ax & 0xff;
 							sint8 dl = dx & 0xff;
 							// difference in addresses is exactly 0x4b0c
-							RCT2_GLOBAL(0x0138DB98, sint8)[ebp + i*0x4B0C] = al;
-							RCT2_GLOBAL(0x0138EE58, sint8)[ebp + i*0x4B0C] = dl;
+							RCT2_ADDRESS(0x0138DB98, sint8)[ebp + i*0x4B0C] = al;
+							RCT2_ADDRESS(0x0138EE58, sint8)[ebp + i*0x4B0C] = dl;
 							ebp++;
 							uint16 bp = ebp & 0xffff;
-							if (bp <= RCT2_GLOBAL(0x0138B612, uint16)[i*0x4B0C]) {
-								RCT2_GLOBAL(0x0138B612, uint16)[i*0x4B0C] = bp;
+							if (bp <= RCT2_ADDRESS(0x0138B612, uint16)[i*0x4B0C]) {
+								RCT2_ADDRESS(0x0138B612, uint16)[i*0x4B0C] = bp;
 							}
 						}
 
@@ -303,7 +303,7 @@ void update_ride_measurements()
 				}
 			} else {
 				// set the second bit
-				RCT2_GLOBAL(0x0138B60D, uint8)[i*0x4B0C] |= 2;
+				RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] |= 2;
 				continue;
 			}
 		}
@@ -320,13 +320,13 @@ void add_store_measurement(int addr, sint16 initial_value, int idx);
  */
 void add_store_measurement(int addr, sint16 initial_value, int idx) 
 {
-	uint16 cx = RCT2_GLOBAL(addr, uint16)[idx];
+	uint16 cx = RCT2_ADDRESS(addr, uint16)[idx];
 	uint16 uax = initial_value;
 	uax += cx;
 	uax = uax >> 1;
 
 	uint8 al = uax & 0xff;
-	RCT2_GLOBAL(addr, uint8)[idx] = al;
+	RCT2_ADDRESS(addr, uint8)[idx] = al;
 
 }
 
