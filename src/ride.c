@@ -24,7 +24,6 @@
 #include "peep.h"
 #include "window.h"
 
-#include "stdlib.h"
 
 #define GET_RIDE(x) (&(RCT2_ADDRESS(RCT2_ADDRESS_RIDE_LIST, rct_ride)[x]))
 #define GET_RIDE_MEASUREMENT(x) (&(RCT2_ADDRESS(RCT2_ADDRESS_RIDE_MEASUREMENTS, rct_ride_measurement)[x]))
@@ -128,7 +127,7 @@ int ride_get_max_queue_time(rct_ride *ride)
 	int i, queueTime = 0;
 	for (i = 0; i < 4; i++)
 		if (ride->entrances[i] != 0xFFFF)
-			queueTime = max(queueTime, ride->queue_time[i]);
+			queueTime = queueTime > ride->queue_time[i] ? queueTime : ride->queue_time[i];
 	return queueTime;
 }
 
@@ -184,7 +183,7 @@ void update_ride_measurements()
 						continue;
 					}
 					RCT2_ADDRESS(0x0138B616, uint8)[i*0x4B0C] = i;
-					RCT2_GLOBAL(0x0138B617, uint8) = *(si+0x4b);
+					RCT2_GLOBAL(0x0138B617, uint8) = *((int*)si+0x4b);
 
 					// set the first bit
 					RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] |= 1;
@@ -220,11 +219,11 @@ void update_ride_measurements()
 			// Code has a comparison for plus50 and 6 here.
 			if (plus50 != 6) {
 				// 6b6566
-				ax = *(si+0x36);
+				ax = *((int*)si+0x36);
 				ax = ax >> 2;
 				if (ax == 0xD8 || ax == 0x7B || ax == 9 || ax == 0x3F || 
 						ax == 0x93 || ax == 0x9B) {
-					if (*(si+0x28) == 0) {
+					if (*((int*)si+0x28) == 0) {
 						continue;
 					}
 				}
@@ -236,7 +235,7 @@ void update_ride_measurements()
 				} else {
 					if (RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] & 4) {
 						// 6B662A
-						sint32 eax = *(si+0x28);
+						sint32 eax = *((int*)si+0x28);
 						eax = eax * 5;
 						eax = eax >> 0x10;
 						eax = abs(eax);
@@ -249,7 +248,7 @@ void update_ride_measurements()
 							eax &= 0xffff00ff;
 							eax |= 0x00ff;
 						}
-						sint16 dx = *(si+0x12);
+						sint16 dx = *((int*)si+0x12);
 						dx = dx >> 3;
 						if (dx < 0xff) {
 							dx = 0xff;
