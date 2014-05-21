@@ -23,7 +23,9 @@
 #include "sprite.h"
 #include "peep.h"
 #include "window.h"
+#include "windows.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 
 #define GET_RIDE(x) (&(RCT2_ADDRESS(RCT2_ADDRESS_RIDE_LIST, rct_ride)[x]))
@@ -154,14 +156,15 @@ void update_ride_measurements()
 	if (RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 2) {
 		return;
 	}
-	std::cout << "Running ride measurements from C!";
+	
 	for (i = 0; i < MAX_RIDE_MEASUREMENTS; i++) {
 		ride_measurement = GET_RIDE_MEASUREMENT(i);
 		// var_00 == bl
 		if (ride_measurement->var_00 == 0xff) {
 			continue;
 		}
-		if (RCT2_ADDRESS(0x01362AC8, uint32)[ride_measurement->var_00] & 1 == 0) {
+		OutputDebugString("Checking ride\n");
+		if (RCT2_ADDRESS(0x01362AC8, uint8)[0x260*ride_measurement->var_00] & 1 == 0) {
 			continue;
 		}
 		if (RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] & 1 == 0) {
@@ -202,9 +205,9 @@ void update_ride_measurements()
 			// XXX also duplicates from above
 			si = si << 8;
 			si = si + RCT2_ADDRESS_SPRITE_LIST;
-			ebp = RCT2_ADDRESS(0x0138B614, uint32)[i*0x4B0C];
+			ebp = RCT2_ADDRESS(0x0138B614, uint16)[i*0x4B0C];
 			plus50 = RCT2_GLOBAL(si+0x50, uint8);
-			if (RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] & 2 != 0) {
+			if (RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] & 2) {
 				if (plus50 == 3 || plus50 == 0x16) {
 					// clear 2nd bit
 					RCT2_ADDRESS(0x0138B60D, uint8)[i*0x4B0C] &= 0xFD;
