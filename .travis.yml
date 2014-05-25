@@ -1,6 +1,7 @@
 language: c
 
 before_install:
+    - ls -al .cache
     - sudo apt-get install -y --force-yes binutils-mingw-w64-i686 gcc-mingw-w64-i686 g++-mingw-w64-i686
 
     # fetch precompiled SDL2 + headers for MinGW and push it into the expected directory
