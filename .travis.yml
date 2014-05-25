@@ -29,5 +29,5 @@ script:
     #- make VERBOSE=1
     - popd
 
-#notifications:
-  #irc: "irc.freenode.net#openrct2"
+notifications:
+  irc: "irc.freenode.net#openrct2"
