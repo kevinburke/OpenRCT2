@@ -52,16 +52,25 @@ typedef struct {
 
 	// Not sure if these should be uint or sint.
 	uint8 var_0C7;
+	// number of cars?
 	uint8 var_0C8;
 	uint8 var_0C9;
 
-	uint8 pad_0CA[0x1B];
+	uint8 pad_0CA[6];
+
+	uint8 var_0D0;
+	uint8 pad_0D1[4];
+	uint8 var_0D5;
+	uint8 pad_0D6[0x14]
 
 	sint32 var_0E4;
 	sint32 var_0E8;
 	sint32 var_0EC;
 	sint32 var_0F0;
-	uint8 pad_0F4[0x20];
+	uint8 pad_0F4[0x1A];
+	uint16 var_10E;
+	uint16 var_110;
+	uint16 var_112;
 	uint8 var_114;
 	// Track length? Number of track segments?
 	uint8 var_115;

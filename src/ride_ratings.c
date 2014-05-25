@@ -23,6 +23,120 @@
 #include "ride_data.h"
 #include "ride_ratings.h"
 
+void go_karts_excitement(rct_ride *ride) {
+	if (ride->lifecycle_flags & RIDE_LIFECYCLE_TESTED == 0) {
+		return;
+	}
+
+	ride->var_198 = 16;
+	sub_655FD6(ride);
+
+	uint32 cuml = ride->var_0E4;
+	cuml += ride->var_0E8;
+	cuml += ride->var_0EC;
+	cuml += ride->var_0F0;
+	cuml = cuml >> 0x10;
+
+	if (cuml > 700) {
+		cuml = 700;
+	}
+
+	// This is sort of odd. I think the goal is to clear the high bit?
+	cuml = cuml * 0x8000;
+	cuml = cuml >> 0x10;
+
+	uint32 ebx = cuml;
+	if (ride->mode == RIDE_MODE_RACE) {
+		if (ride->var_0C8 >= 3) {
+			ebx += 0x8C;
+			uint32 ecx = 50;
+			uint32 eax = ride->var_0D0;
+			eax--;
+			eax = eax * 30;
+			ebx += eax;
+			eax = eax / 2;
+			ecx += eax;
+
+			sub_65DDD1();
+		}
+
+	}
+}
+
+/**
+ * rct2: 0x0065DDD1
+ */
+void sub_65DDD1(rct_ride *ride) {
+	uint32 ebx = 0;
+	uint32 ecx = 0;
+	uint32 ebp = 0;
+	if (ride->type == RIDE_TYPE_HAUNTED_HOUSE) {
+		if (ride->var_0D5 & 0x20) {
+			ebx += 40;
+			ecx += 25;
+			ebp += 55;
+		}
+	} else if (ride->type == RIDE_TYPE_LOG_FLUME) {
+		if (ride->var_0D5 & 0x40) {
+			ebx += 48;
+			ecx += 55;
+			ebp += 65;
+		}
+	} else {
+		// gentle? thrill? maybe?
+		if (ride->var_0D5 & 0x20) {
+			ebx += 50;
+			ecx += 30;
+			ebp += 20;
+		} 
+		if (ride->var_0D5 & 0x40) {
+			ebx += 55;
+			ecx += 30;
+		}
+		if (ride->var_0D5 & 0x80) {
+			ebx += 35;
+			ecx += 20;
+			ebp += 23;
+		}
+	}
+	// 65DE3C
+	uint32 eax = ride->var_0D5;
+	// set lower 5 bits
+	eax &= 0x1F;
+	if (eax > 9) {
+		eax = 9;
+	}
+	// multiply it by 3, roughly
+	eax = (eax * 0x3E38E) >> 0x10;
+	ebx += eax;
+
+	eax = ride->var_0D5;
+	// set lower 5 bits
+	eax &= 0x1F;
+	if (eax > 0x0B) {
+		eax = 0x0B;
+	}
+
+	// multiply by 2, roughly
+	eax = (eax * 0x245D1) >> 0x10;
+	ecx += eax;
+
+	eax = ride->var_0D5;
+	eax &= 0x1F;
+	eax -= 5;
+	if (eax < 0) {
+		eax = 0;
+	}
+
+	if (eax > 0x0A) {
+		eax = 0x0A;
+	}
+	eax = (eax * 0x140000) >> 0x10;
+	ebp += eax;
+
+	// 65DE9D
+}
+
 /**
  * rct2: 0x0065C4D4
  *
