@@ -6,7 +6,7 @@ before_install:
     # fetch precompiled SDL2 + headers for MinGW and push it into the expected directory
     - mkdir -p .cache
     - export SDL2_PV=2.0.3
-    - if [[ ! -f wget SDL2-devel-${SDL2_PV}-mingw.tar.gz ]]; then http://libsdl.org/release/SDL2-devel-${SDL2_PV}-mingw.tar.gz --output-document .cache/SDL2-devel-${SDL2_PV}-mingw.tar.gz; fi
+    - if [[ ! -f SDL2-devel-${SDL2_PV}-mingw.tar.gz ]]; then wget http://libsdl.org/release/SDL2-devel-${SDL2_PV}-mingw.tar.gz --output-document .cache/SDL2-devel-${SDL2_PV}-mingw.tar.gz; fi
     - pushd .cache && tar -xzf SDL2-devel-${SDL2_PV}-mingw.tar.gz && popd
 
     # but first fix SDL2 bug
