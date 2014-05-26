@@ -45,19 +45,32 @@ void go_karts_excitement(rct_ride *ride) {
 	cuml = cuml * 0x8000;
 	cuml = cuml >> 0x10;
 
-	uint32 ebx = cuml;
+	uint32 excitement = cuml;
 	if (ride->mode == RIDE_MODE_RACE) {
 		if (ride->var_0C8 >= 3) {
-			ebx += 0x8C;
-			uint32 ecx = 50;
+			excitement += 140;
+			uint32 intensity = 50;
 			uint32 eax = ride->var_0D0;
 			eax--;
 			eax = eax * 30;
-			ebx += eax;
+			excitement += eax;
 			eax = eax / 2;
-			ecx += eax;
+			intensity += eax;
 
-			sub_65DDD1();
+			rating_tuple tup = sub_65DDD1(ride);
+			tup.excitement = tup.excitement * 0x116A;
+			tup.intensity = tup.intensity * 0x0D94;
+			tup.nausea = tup.nausea * 0x1656;
+
+			tup.excitement = tup.excitement >> 16;
+			tup.intensity = tup.intensity >> 16;
+			tup.nausea = tup.nausea >> 16;
+
+			excitement += tup.excitement;
+			intensity += tup.intensity;
+			nausea += tup.nausea;
+
+			rating_tuple tup = sub_65E139(ride);
 		}
 
 	}
@@ -67,36 +80,36 @@ void go_karts_excitement(rct_ride *ride) {
  * rct2: 0x0065DDD1
  */
 void sub_65DDD1(rct_ride *ride) {
-	uint32 ebx = 0;
-	uint32 ecx = 0;
-	uint32 ebp = 0;
+	uint32 excitement = 0;
+	uint32 intensity = 0;
+	uint32 nausea = 0;
 	if (ride->type == RIDE_TYPE_HAUNTED_HOUSE) {
 		if (ride->var_0D5 & 0x20) {
-			ebx += 40;
-			ecx += 25;
-			ebp += 55;
+			excitement += 40;
+			intensity += 25;
+			nausea += 55;
 		}
 	} else if (ride->type == RIDE_TYPE_LOG_FLUME) {
 		if (ride->var_0D5 & 0x40) {
-			ebx += 48;
-			ecx += 55;
-			ebp += 65;
+			excitement += 48;
+			intensity += 55;
+			nausea += 65;
 		}
 	} else {
 		// gentle? thrill? maybe?
 		if (ride->var_0D5 & 0x20) {
-			ebx += 50;
-			ecx += 30;
-			ebp += 20;
+			excitement += 50;
+			intensity += 30;
+			nausea += 20;
 		} 
 		if (ride->var_0D5 & 0x40) {
-			ebx += 55;
-			ecx += 30;
+			excitement += 55;
+			intensity += 30;
 		}
 		if (ride->var_0D5 & 0x80) {
-			ebx += 35;
-			ecx += 20;
-			ebp += 23;
+			excitement += 35;
+			intensity += 20;
+			nausea += 23;
 		}
 	}
 	// 65DE3C
@@ -108,7 +121,7 @@ void sub_65DDD1(rct_ride *ride) {
 	}
 	// multiply it by 3, roughly
 	eax = (eax * 0x3E38E) >> 0x10;
-	ebx += eax;
+	excitement += eax;
 
 	eax = ride->var_0D5;
 	// set lower 5 bits
@@ -119,7 +132,7 @@ void sub_65DDD1(rct_ride *ride) {
 
 	// multiply by 2, roughly
 	eax = (eax * 0x245D1) >> 0x10;
-	ecx += eax;
+	intensity += eax;
 
 	eax = ride->var_0D5;
 	eax &= 0x1F;
@@ -132,9 +145,112 @@ void sub_65DDD1(rct_ride *ride) {
 		eax = 0x0A;
 	}
 	eax = (eax * 0x140000) >> 0x10;
-	ebp += eax;
+	nausea += eax;
 
 	// 65DE9D
+	excitement += apply_10E_multiplier(ride->var_10E, 256, 0x28000, 7);
+	intensity += apply_10E_multiplier(ride->var_10E, 256, 0x14000, 7);
+	nausea += apply_10E_multiplier(ride->var_10E, 256, 0x50000, 7);
+
+	excitement += apply_10E_multiplier(ride->var_10E, 32, 0x30000, 7);
+	intensity += apply_10E_multiplier(ride->var_10E, 32, 0xC000, 7);
+	nausea += apply_10E_multiplier(ride->var_10E, 32, 0x32000, 7);
+
+	excitement += apply_10E_multiplier(ride->var_10E, 1, 0x0F7BD, 0x1F);
+	intensity += apply_10E_multiplier(ride->var_10E, 1, 0x5294, 0x1F);
+	nausea += apply_10E_multiplier(ride->var_10E, 1, 0xA529, 0x1F);
+
+	excitement += apply_10E_multiplier(ride->var_110, 256, 0x3C000, 7);
+	intensity += apply_10E_multiplier(ride->var_110, 256, 0x14000, 7);
+	nausea += apply_10E_multiplier(ride->var_110, 256, 0x50000, 7);
+
+	excitement += apply_10E_multiplier(ride->var_110, 32, 0x3C000, 7);
+	intensity += apply_10E_multiplier(ride->var_110, 32, 0xC000, 7);
+	nausea += apply_10E_multiplier(ride->var_110, 32, 0x32000, 7);
+
+	excitement += apply_10E_multiplier(ride->var_10E, 1, 0x12108, 0x1F);
+	intensity += apply_10E_multiplier(ride->var_10E, 1, 0x5294, 0x1F);
+	nausea += apply_10E_multiplier(ride->var_10E, 1, 0xBDEF, 0x1F);
+
+	eax = ride->var_112;
+	eax = eax >> 11;
+	eax = eax & 0x3F;
+	if (eax > 4) {
+		eax = 4;
+	}
+	eax = eax * 0x78000;
+	eax = eax >> 16;
+	excitement += eax;
+
+	eax = ride->var_112;
+	eax = eax >> 11;
+	eax = eax & 0x3F;
+	if (eax > 8) {
+		eax = 8;
+	}
+	eax = eax * 0x78000;
+	eax = eax >> 16;
+	nausea += eax;
+
+	eax = ride->var_112;
+	eax = eax >> 8;
+	eax = eax & 7;
+	if (eax > 6) {
+		eax = 6;
+	}
+	eax = eax * 0x42AAA;
+	eax = eax >> 16;
+	excitement += eax;
+
+	eax = ride->var_112;
+	eax = eax / 32;
+	eax = eax & 7;
+	if (eax > 6) {
+		eax = 6;
+	}
+	eax = eax * 0x3AAAA;
+	eax = eax >> 16;
+	excitement += eax;
+
+	eax = ride->var_112;
+	eax = eax & 0x1F;
+	if (eax > 7) {
+		eax = 7;
+	}
+	eax = eax * 0x2DB6D;
+	eax = eax >> 16;
+	excitement += eax;
+
+	eax = ride->var_114;
+	eax = eax & 0x1F;
+	if (eax > 6) {
+		eax = 6;
+	}
+	eax = eax * 0x1AAAAA;
+	eax = eax >> 16;
+	excitement += eax;
+
+	eax = ride->var_114;
+	eax = eax & 0x1F;
+	eax = eax * 0x320000;
+	eax = eax >> 16;
+	intensity += eax;
+
+	eax = ride->var_114;
+	eax = eax & 0x1F;
+	eax = eax * 0x15AAAA;
+	eax = eax >> 16;
+	nausea += eax;
+
+	rating_tuple tup = { excitement, intensity, nausea };
+	return tup;
+}
+
+uint32 apply_10E_multiplier(uint16 var_10E, uint16 quotient, uint32 multiplier, uint8 low_bits) {
+	uint32 eax = var_10E / quotient;
+	eax &= low_bits;
+	eax = eax * multiplier;
+	return eax >> 16;
 }
 
 /**
