@@ -57,7 +57,7 @@ typedef struct {
 	uint8 pad_0CA[6];
 
 	// Laps?
-	uint8 var_0D0;
+	uint8 laps;             // 0x0D0
 
 	uint8 pad_0D1[4];
 	uint8 var_0D5;

@@ -45,12 +45,10 @@ void go_karts_excitement(rct_ride *ride) {
 		if (ride->num_trains >= 3) {
 			excitement += 140;
 			uint32 intensity = 50;
-			uint32 eax = ride->var_0D0;
-			eax--;
-			eax = eax * 30;
-			excitement += eax;
-			eax = eax / 2;
-			intensity += eax;
+
+			uint32 laps = ride->laps - 1;
+			excitement += laps * 30;
+			intensity += laps * 15;
 
 			rating_tuple tup = sub_65DDD1(ride);
 			tup.excitement = tup.excitement * 0x116A;
