@@ -70,9 +70,9 @@ void go_karts_excitement(rct_ride *ride) {
 
 			excitement += tup.excitement;
 			intensity += tup.intensity;
-			nausea += tup.nausea;
+			uint32 nausea = tup.nausea;
 
-			rating_tuple tup = sub_65E139(ride);
+			tup = sub_65E139(ride);
 
 			tup.excitement = tup.excitement * 0x2222;
 			tup.intensity = tup.intensity * 0x1555;
@@ -85,7 +85,7 @@ void go_karts_excitement(rct_ride *ride) {
 			intensity += tup.intensity;
 			nausea += tup.nausea;
 
-			rating_tuple tup = sub_65E1C2(ride);
+			tup = sub_65E1C2(ride);
 
 			tup.excitement = tup.excitement * 0x0A0A;
 			tup.intensity = tup.intensity * 0x2222;
