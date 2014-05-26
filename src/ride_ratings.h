@@ -34,7 +34,11 @@ typedef struct {
 	ride_rating nausea;
 } rating_tuple;
 
+void go_karts_excitement(rct_ride *ride);
 void crooked_house_excitement(rct_ride *ride);
+void sub_65DDD1(rct_ride *ride);
+void sub_65E1C2(rct_ride *ride);
+void sub_65E139(rct_ride *ride);
 void sub_655FD6(rct_ride *ride);
 ride_rating apply_intensity_penalty(ride_rating excitement, ride_rating intensity);
 rating_tuple per_ride_rating_adjustments(rct_ride *ride, ride_rating excitement,

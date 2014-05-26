@@ -104,7 +104,7 @@ void go_karts_excitement(rct_ride *ride) {
 /**
  * rct2: 0x0065E1C2
  */
-rating_tuple sub_65E1C2(ride) {
+rating_tuple sub_65E1C2(rct_ride *ride) {
 	uint32 excitement = 0;
 	uint32 intensity = 0;
 	uint32 nausea = 0;
