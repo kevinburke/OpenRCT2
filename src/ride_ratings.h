@@ -44,6 +44,8 @@ ride_rating apply_intensity_penalty(ride_rating excitement, ride_rating intensit
 rating_tuple per_ride_rating_adjustments(rct_ride *ride, ride_rating excitement,
 	ride_rating intensity, ride_rating nausea);
 uint16 compute_upkeep(rct_ride *ride);
+
 uint32 shift_flag_max_mult_shift(uint32 value, uint32 initial_shift, uint8 flag, uint8 max_val, uint32 mult);
+uint32 apply_10E_multiplier(uint16 var_10E, uint16 quotient, uint32 multiplier, uint8 low_bits);
 
 #endif
