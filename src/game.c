@@ -35,6 +35,7 @@
 #include "string_ids.h"
 #include "title.h"
 #include "tutorial.h"
+#include "vehicle.h"
 #include "viewport.h"
 #include "widget.h"
 #include "window.h"
@@ -149,7 +150,7 @@ void game_logic_update()
 	RCT2_CALLPROC_EBPSAFE(0x006646E1);
 	RCT2_CALLPROC_EBPSAFE(0x006A876D);
 	peep_update_all();
-	RCT2_CALLPROC_EBPSAFE(0x006D4204);	// update vehicles
+	vehicle_update_all();
 	RCT2_CALLPROC_EBPSAFE(0x00672AA4);	// update text effects
 	RCT2_CALLPROC_EBPSAFE(0x006ABE4C);	// update rides
 	park_update();
@@ -754,7 +755,7 @@ static void input_leftmousedown(int x, int y, rct_window *w, int widgetIndex)
 		if (widget_is_disabled(w, widgetIndex))
 			break;
 
-		sound_play_panned(4, w->x + (widget->left + widget->right) / 2);
+		sound_play_panned(SOUND_CLICK_1, w->x + (widget->left + widget->right) / 2);
 		
 		// Set new cursor down widget
 		RCT2_GLOBAL(RCT2_ADDRESS_CURSOR_DOWN_WINDOWCLASS, rct_windowclass) = windowClass;
@@ -1021,7 +1022,7 @@ void handle_shortcut_command(int shortcutIndex)
 	case SHORTCUT_SHOW_FINANCIAL_INFORMATION:
 		if (!(RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 0x0C))
 			if (!(RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, uint32) & 0x800))
-				RCT2_CALLPROC_EBPSAFE(0x0069DDF1);
+				window_finances_open();
 		break;
 	case SHORTCUT_SHOW_RESEARCH_INFORMATION:
 		if (!(RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 0x0E)) {
