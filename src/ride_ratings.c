@@ -96,6 +96,8 @@ void go_karts_excitement(rct_ride *ride) {
 			excitement += tup.excitement;
 			intensity += tup.intensity;
 			nausea += tup.nausea;
+
+			// 658E36
 		}
 
 	}
