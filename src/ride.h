@@ -61,7 +61,7 @@ typedef struct {
 
 	uint8 pad_0D1[4];
 	uint8 var_0D5;
-	uint8 pad_0D6[0x14];
+	uint8 pad_0D6[0xE];
 
 	// Station to station runtimes. Not necessarily in order you'd expect.
 	//
