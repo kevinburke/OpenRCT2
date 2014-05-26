@@ -153,8 +153,8 @@ rating_tuple sub_65E139(rct_ride *ride) {
 	uint32 nausea = 0;
 
 	excitement += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, 9, 0x0B1C71);
-	intensity += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, UINT32_MAX, 0xE2AAA)
-	nausea += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, UINT32_MAX, 0xA0000)
+	intensity += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, UINT32_MAX, 0xE2AAA);
+	nausea += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, UINT32_MAX, 0xA0000);
 
 	uint32 eax = ride->var_117;
 	eax = eax << 1;
@@ -162,13 +162,13 @@ rating_tuple sub_65E139(rct_ride *ride) {
 	eax = eax >> 16;
 	excitement += eax;
 
-	uint32 eax = ride->var_117;
+	eax = ride->var_117;
 	eax = eax << 1;
 	eax = eax * 0x7D00;
 	eax = eax >> 16;
 	intensity += eax;
 
-	uint32 eax = ride->var_117;
+	eax = ride->var_117;
 	eax = eax << 1;
 	eax = eax * 0x2800;
 	eax = eax >> 16;
