@@ -61,7 +61,7 @@ typedef struct {
 	uint8 var_0D0;
 	uint8 pad_0D1[4];
 	uint8 var_0D5;
-	uint8 pad_0D6[0x14]
+	uint8 pad_0D6[0x14];
 
 	sint32 var_0E4;
 	sint32 var_0E8;
@@ -74,7 +74,12 @@ typedef struct {
 	uint8 var_114;
 	// Track length? Number of track segments?
 	uint8 var_115;
-	uint8 pad_116[0x0F];
+	uint8 pad_116[1];
+	uint8 var_117;
+	uint32 var_118;
+	uint16 var_11C;
+	uint8 var_11E;
+	uint8 pad_11F[5];
 	sint16 var_124;
 	sint16 var_126;
 	sint16 var_128;

@@ -23,6 +23,8 @@
 #include "ride_data.h"
 #include "ride_ratings.h"
 
+#include <stdint.h>
+
 void go_karts_excitement(rct_ride *ride) {
 	if (ride->lifecycle_flags & RIDE_LIFECYCLE_TESTED == 0) {
 		return;
@@ -71,15 +73,115 @@ void go_karts_excitement(rct_ride *ride) {
 			nausea += tup.nausea;
 
 			rating_tuple tup = sub_65E139(ride);
+
+			tup.excitement = tup.excitement * 0x2222;
+			tup.intensity = tup.intensity * 0x1555;
+			tup.nausea = tup.nausea * 0x1999;
+			tup.excitement = tup.excitement >> 16;
+			tup.intensity = tup.intensity >> 16;
+			tup.nausea = tup.nausea >> 16;
+
+			excitement += tup.excitement;
+			intensity += tup.intensity;
+			nausea += tup.nausea;
+
+			rating_tuple tup = sub_65E1C2(ride);
+
+			tup.excitement = tup.excitement * 0x0A0A;
+			tup.intensity = tup.intensity * 0x2222;
+			tup.nausea = tup.nausea * 0x924;
+			tup.excitement = tup.excitement >> 16;
+			tup.intensity = tup.intensity >> 16;
+			tup.nausea = tup.nausea >> 16;
+			excitement += tup.excitement;
+			intensity += tup.intensity;
+			nausea += tup.nausea;
 		}
 
 	}
 }
 
 /**
+ * rct2: 0x0065E1C2
+ */
+rating_tuple sub_65E1C2(ride) {
+	uint32 excitement = 0;
+	uint32 intensity = 0;
+	uint32 nausea = 0;
+
+	excitement += shift_flag_max_mult_shift(ride->var_118, 16, 0xffffffff, 1000, 0x23D7);
+	intensity += shift_flag_max_mult_shift(ride->var_118, 16, 0xffffffff, 2000, 0x2666);
+	nausea += shift_flag_max_mult_shift(ride->var_118, 16, 0xffffffff, 1000, 0x4000);
+
+	uint32 eax = ride->var_11C;
+	eax = eax * 0x7684B;
+	eax = eax >> 16;
+	excitement += eax;
+
+	if (ride->var_11E & 0x40) {
+		excitement += 20;
+		nausea += 15;
+	}
+
+	if (ride->var_11E & 0x20) {
+		excitement += 20;
+		nausea += 15;
+	}
+
+	excitement += shift_flag_max_mult_shift(ride->var_11E, 0, 0x1F, 11, 0xBD174);
+
+	rating_tuple tup = { excitement, intensity, nausea };
+	return tup;
+}
+
+uint32 shift_flag_max_mult_shift(uint32 value, uint32 initial_shift, uint8 flag, uint8 max_val, uint32 mult) {
+	uint32 eax = value >> initial_shift;
+	eax = eax & flag;
+	if (eax > max_val) {
+		eax = max_val;
+	}
+	eax = eax * mult;
+	return eax >> 16;
+}
+
+/**
+ * rct2: 0x0065E139
+ */
+rating_tuple sub_65E139(rct_ride *ride) {
+	uint32 excitement = 0;
+	uint32 intensity = 0;
+	uint32 nausea = 0;
+
+	excitement += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, 9, 0x0B1C71);
+	intensity += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, UINT32_MAX, 0xE2AAA)
+	nausea += shift_flag_max_mult_shift(ride->var_115, 0, 0x3F, UINT32_MAX, 0xA0000)
+
+	uint32 eax = ride->var_117;
+	eax = eax << 1;
+	eax = eax * 0x3E80;
+	eax = eax >> 16;
+	excitement += eax;
+
+	uint32 eax = ride->var_117;
+	eax = eax << 1;
+	eax = eax * 0x7D00;
+	eax = eax >> 16;
+	intensity += eax;
+
+	uint32 eax = ride->var_117;
+	eax = eax << 1;
+	eax = eax * 0x2800;
+	eax = eax >> 16;
+	nausea += eax;
+
+	rating_tuple tup = { excitement, intensity, nausea };
+	return tup;
+}
+
+/**
  * rct2: 0x0065DDD1
  */
-void sub_65DDD1(rct_ride *ride) {
+rating_tuple sub_65DDD1(rct_ride *ride) {
 	uint32 excitement = 0;
 	uint32 intensity = 0;
 	uint32 nausea = 0;
