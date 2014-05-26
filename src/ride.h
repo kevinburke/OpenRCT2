@@ -50,23 +50,28 @@ typedef struct {
 	uint16 train_car_map[1];		// 0x086 Points to the first car in the train
 	uint8 pad_088[0x3F];
 
-	// Not sure if these should be uint or sint.
-	uint8 var_0C7;
-	// number of cars?
-	uint8 var_0C8;
-	uint8 var_0C9;
+	uint8 num_stations; // 0x0C7
+	uint8 num_trains;   // 0x0C8
+	uint8 cars_per_train; // 0x0C9
 
 	uint8 pad_0CA[6];
 
+	// Laps?
 	uint8 var_0D0;
+
 	uint8 pad_0D1[4];
 	uint8 var_0D5;
 	uint8 pad_0D6[0x14];
 
-	sint32 var_0E4;
-	sint32 var_0E8;
-	sint32 var_0EC;
-	sint32 var_0F0;
+	// Station to station runtimes. Not necessarily in order you'd expect.
+	//
+	// NB: The runtime is stored in the upper word. For example, a value of
+	// 2293760 corresponds to 35 seconds.
+	sint32 runtime_section1;  // 0E4
+	sint32 runtime_section2;  // 0E8
+	sint32 runtime_section3;  // 0EC
+	sint32 runtime_section4;  // 0F0
+
 	uint8 pad_0F4[0x1A];
 	uint16 var_10E;
 	uint16 var_110;
@@ -320,5 +325,6 @@ int ride_get_max_queue_time(rct_ride *ride);
 void ride_init_all();
 void reset_all_ride_build_dates();
 void ride_update_favourited_stat();
+uint32 ride_get_runtime(rct_ride *ride);
 
 #endif

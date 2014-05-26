@@ -33,23 +33,16 @@ void go_karts_excitement(rct_ride *ride) {
 	ride->var_198 = 16;
 	sub_655FD6(ride);
 
-	uint32 cuml = ride->var_0E4;
-	cuml += ride->var_0E8;
-	cuml += ride->var_0EC;
-	cuml += ride->var_0F0;
-	cuml = cuml >> 0x10;
+	uint32 runtime_seconds = ride_get_runtime(ride);
 
-	if (cuml > 700) {
-		cuml = 700;
+	if (runtime_seconds > 700) {
+		runtime_seconds = 700;
 	}
 
-	// This is sort of odd. I think the goal is to clear the high bit?
-	cuml = cuml * 0x8000;
-	cuml = cuml >> 0x10;
+	uint32 excitement = runtime_seconds / 2;
 
-	uint32 excitement = cuml;
 	if (ride->mode == RIDE_MODE_RACE) {
-		if (ride->var_0C8 >= 3) {
+		if (ride->num_trains >= 3) {
 			excitement += 140;
 			uint32 intensity = 50;
 			uint32 eax = ride->var_0D0;
@@ -415,21 +408,18 @@ uint16 compute_upkeep(rct_ride *ride)
 	dl = dl & 3;
 	upkeep += trackCost * dl;
 
-	uint32 cuml = ride->var_0E4;
-	cuml += ride->var_0E8;
-	cuml += ride->var_0EC;
-	cuml += ride->var_0F0;
-	cuml = cuml >> 0x10;
+	uint32 runtime_seconds = ride_get_runtime(ride);
 
 	// The data originally here was 20's and 0's. The 20's all represented
 	// rides that had tracks. The 0's were fixed rides like crooked house or
 	// bumper cars.
 	// Data source is 0x0097E3AC
+	uint32 runtime_upkeep = runtime_seconds;
 	if (hasRunningTrack[ride->type]) {
-		cuml = cuml * 20;
+		runtime_upkeep = runtime_seconds * 20;
 	}
-	cuml = cuml >> 0x0A;
-	upkeep += (uint16)cuml;
+	runtime_upkeep = runtime_upkeep >> 0x0A;
+	upkeep += (uint16)runtime_upkeep;
 
 	if (ride->lifecycle_flags & RIDE_LIFECYCLE_ON_RIDE_PHOTO) {
 		// The original code read from a table starting at 0x0097E3AE and
@@ -464,16 +454,16 @@ uint16 compute_upkeep(rct_ride *ride)
 	// various variables set on the ride itself.
 
 	// https://gist.github.com/kevinburke/e19b803cd2769d96c540
-	upkeep += rideUnknownData1[ride->type] * ride->var_0C8;
+	upkeep += rideUnknownData1[ride->type] * ride->num_trains;
 
 	// either set to 3 or 0, extra boosts for some rides including mini golf
 	if (rideUnknownData2[ride->type]) {
-		upkeep += 3 * ride->var_0C9;
+		upkeep += 3 * ride->cars_per_train;
 	}
 
 	// slight upkeep boosts for some rides - 5 for mini railroad, 10 for log
 	// flume/rapids, 10 for roller coaster, 28 for giga coaster
-	upkeep += rideUnknownData3[ride->type] * ride->var_0C7;
+	upkeep += rideUnknownData3[ride->type] * ride->num_stations;
 
 	if (ride->mode == RIDE_MODE_REVERSE_INCLINED_SHUTTLE) {
 		upkeep += 30;
@@ -583,6 +573,7 @@ ride_rating apply_intensity_penalty(ride_rating excitement, ride_rating intensit
  */
 void sub_655FD6(rct_ride *ride)
 {
+	// Satisfaction decrease, or something, based on age, maybe
     uint8 al = ride->var_1CD;
     // No idea what this address is; maybe like compensation of some kind? The
     // maximum possible value?

@@ -201,3 +201,14 @@ void ride_update_favourited_stat()
 	window_invalidate_by_id(WC_RIDE_LIST, 0);
 }
 
+/**
+ * Return the running time for all sections of the ride. Note, values are
+ * stored in the high bits so you need to right shift by 0x10 to get the value.
+ */
+uint32 ride_get_runtime(rct_ride *ride) {
+	uint32 runtime_accum = ride->runtime_section1 + ride->runtime_section2 + \
+						   ride->runtime_section3 + ride->runtime_section4;
+	// Shift to get actual value
+	return runtime_accum >> 0x10;
+}
+
