@@ -13,5 +13,5 @@ notifications:
 
 cache: 
     directories:
-        - cache
+        - .cache
     apt: true
