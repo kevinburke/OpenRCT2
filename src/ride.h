@@ -116,7 +116,7 @@ typedef struct {
 	uint16 reliability;				// 0x146
 	uint16 pad_148;
 	uint16 var_14A;
-	uint8 pad_14C;
+	uint8 var_14C;
 	uint8 var_14D;
 	uint8 pad_14E[0x0A];
 	uint16 var_158;
