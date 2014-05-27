@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Builds openrct2.dll 
 set -e
 
 if [[ ! -d build ]]; then
@@ -11,8 +12,8 @@ pushd build
 	if [[ `uname` == "Darwin" ]]; then
 		cores=$(sysctl -n hw.ncpu)
 	else
-		echo "number of processes is $(nproc)"
-		cores=1
+		# XXX handle Linux systems without nproc installed
+		cores=$(nproc)
 	fi
 	echo "number of cores is $cores"
 	make -j$cores
