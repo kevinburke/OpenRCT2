@@ -38,6 +38,7 @@ typedef struct {
  * Ride structure.
  * size: 0x0260
  */
+#pragma pack(1)
 typedef struct {
 	uint8 type;						// 0x000
 	// pointer to static info. for example, wild mouse type is 0x36, subtype is
