@@ -22,17 +22,7 @@
 #define _RIDE_RATINGS_H_
 
 #include "rct2.h"
-
-typedef fixed16_2dp ride_rating;
-
-#define RIDE_RATING(whole, fraction)	FIXED_2DP(whole, fraction)
-
-// Used for return values, for functions that modify all three.
-typedef struct {
-	ride_rating excitement;
-	ride_rating intensity;
-	ride_rating nausea;
-} rating_tuple;
+#include "ride.h"
 
 void go_karts_excitement(rct_ride *ride);
 void crooked_house_excitement(rct_ride *ride);

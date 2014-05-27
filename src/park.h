@@ -68,6 +68,7 @@ enum {
 	PARK_FLAGS_18 = (1 << 18)
 };
 
+int park_is_award_positive(int type);
 int park_is_open();
 void park_init();
 void park_reset_awards_and_history();
@@ -79,5 +80,6 @@ money32 calculate_company_value();
 void reset_park_entrances();
 
 void park_update();
+void park_update_histories();
 
 #endif

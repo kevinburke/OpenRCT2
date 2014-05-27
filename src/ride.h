@@ -23,6 +23,17 @@
 
 #include "rct2.h"
 
+typedef fixed16_2dp ride_rating;
+
+#define RIDE_RATING(whole, fraction)	FIXED_2DP(whole, fraction)
+
+// Used for return values, for functions that modify all three.
+typedef struct {
+	ride_rating excitement;
+	ride_rating intensity;
+	ride_rating nausea;
+} rating_tuple;
+
 /**
  * Ride structure.
  * size: 0x0260
@@ -53,7 +64,6 @@ typedef struct {
 	uint8 num_stations; // 0x0C7
 	uint8 num_trains;   // 0x0C8
 	uint8 cars_per_train; // 0x0C9
-
 	uint8 pad_0CA[6];
 
 	// Laps?
@@ -79,7 +89,7 @@ typedef struct {
 	uint8 var_114;
 	// Track length? Number of track segments?
 	uint8 var_115;
-	uint8 pad_116[1];
+	uint8 var_116;
 	uint8 var_117;
 	uint32 var_118;
 	uint16 var_11C;
@@ -121,7 +131,7 @@ typedef struct {
 	uint8 pad_1BC[0x11];
 	uint8 var_1CD;
 	uint16 guests_favourite;		// 0x1CE
-	uint32 lifecycle_flags;
+	uint32 lifecycle_flags;			// 0x1D0
 	uint8 pad_1D4[0x20];
 	// Example value for wild mouse ride is d5 (before it's been constructed)
 	// I tried searching the IDA file for "1F4" but couldn't find places where
@@ -316,6 +326,7 @@ enum {
 
 #define MAX_RIDES 255
 #define MAX_RIDE_MEASUREMENTS 8
+#define RIDE_RELIABILITY_UNDEFINED 0xFFFF
 
 extern const uint8 gRideClassifications[255];
 

@@ -59,14 +59,12 @@ int scenario_load_basic(const char *path)
 
 			// Checks for a scenario string object (possibly for localisation)
 			if ((s6Info->entry.flags & 0xFF) != 255) {
-				if (sub_6A9428(&s6Info->entry)) {
+				if (object_get_scenario_text(&s6Info->entry)) {
 					int ebp = RCT2_GLOBAL(0x009ADAF8, uint32);
 					format_string(s6Info->name, RCT2_GLOBAL(ebp, sint16), NULL);
 					format_string(s6Info->details, RCT2_GLOBAL(ebp + 4, sint16), NULL);
 					RCT2_GLOBAL(0x009AA00C, uint8) = RCT2_GLOBAL(ebp + 6, uint8);
-
-					// Disposes the scenario string object (0x009ADAF8)
-					RCT2_CALLPROC_EBPSAFE(0x006A982D);
+					object_free_scenario_text();
 				}
 			}
 			return 1;
@@ -546,9 +544,9 @@ void scenario_objectives_check()
 void scenario_entrance_fee_too_high_check()
 {
 	uint16 x, y;
-	uint16 magic = RCT2_GLOBAL(0x013580EE, uint16),
-		park_entrance_fee = RCT2_GLOBAL(RCT2_ADDRESS_PARK_ENTRANCE_FEE, uint16);
-	int max_fee = magic + (magic / 2);
+	uint16 totalRideValue = RCT2_GLOBAL(RCT2_TOTAL_RIDE_VALUE, uint16);
+	uint16 park_entrance_fee = RCT2_GLOBAL(RCT2_ADDRESS_PARK_ENTRANCE_FEE, uint16);
+	int max_fee = totalRideValue + (totalRideValue / 2);
 	uint32 game_flags = RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, uint32), packed_xy;
 
 	if ((game_flags & PARK_FLAGS_PARK_OPEN) && park_entrance_fee > max_fee) {
@@ -618,7 +616,7 @@ void scenario_update()
 					break;
 			}
 		}
-		RCT2_CALLPROC_EBPSAFE(0x0066A231); // update histories (finance, ratings, etc)
+		park_update_histories();
 		park_calculate_size();
 	}
 
