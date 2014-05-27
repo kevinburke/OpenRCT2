@@ -268,11 +268,13 @@ void ride_debug_string(rct_ride *ride)
 	printf("excitement: %d\n", ride->excitement);
 	printf("intensity: %d\n", ride->intensity);
 	printf("nausea: %d\n", ride->nausea);
-	printf("reliability: %d\n", ride->reliability);
-	printf("var_14A: %x\n", ride->var_14A);
+	printf("reliability (??): %d\n", ride->reliability_1);
+	printf("satisfaction: %d\n", (ride->satisfaction & 0xff) * 5);
+	printf("satisfaction high bits: %x\n", ride->satisfaction >> 8);
 	printf("var_14C: %x\n", ride->var_14C);
 	printf("var_14D: %x\n", ride->var_14D);
-	printf("var_158: %x\n", ride->var_158);
+	printf("popularity: %d\n", (ride->popularity & 0xff) * 4);
+	printf("popularity high bits: %x\n", ride->popularity >> 8);
 	printf("build_date: %d\n", ride->build_date);
 	printf("upkeep_cost: %d\n", ride->upkeep_cost);
 	printf("reliability: %d\n", ride->reliability);

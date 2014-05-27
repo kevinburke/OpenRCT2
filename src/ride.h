@@ -113,13 +113,17 @@ typedef struct {
 	sint16 excitement;				// 0x140
 	sint16 intensity;				// 0x142
 	uint16 nausea;					// 0x144
-	uint16 reliability;				// 0x146
+	uint16 reliability_1;				// 0x146
 	uint16 pad_148;
-	uint16 var_14A;
+	// Only lower 8 bits used for satisfaction. Multiply by 5 to get onscreen
+	// value
+	uint16 satisfaction;             // 0x14A
 	uint8 var_14C;
 	uint8 var_14D;
 	uint8 pad_14E[0x0A];
-	uint16 var_158;
+	// Only lower 8 bits used for popularity. Multiply by 4 to get onscreen
+	// value
+	uint16 popularity;              // 0x158
 	uint8 pad_15A[0x26];
 	uint16 build_date;				
 	sint16 upkeep_cost;				// 0x182
