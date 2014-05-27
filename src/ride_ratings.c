@@ -571,8 +571,7 @@ ride_rating apply_intensity_penalty(ride_rating excitement, ride_rating intensit
  */
 void sub_655FD6(rct_ride *ride)
 {
-	// Satisfaction decrease, or something, based on age, maybe
-    uint8 al = ride->var_1CD;
+    uint8 al = ride->lift_hill_chain_speed;
     // No idea what this address is; maybe like compensation of some kind? The
     // maximum possible value?
     // List of ride names/values is here: 

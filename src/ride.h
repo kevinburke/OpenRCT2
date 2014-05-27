@@ -124,7 +124,12 @@ typedef struct {
 	uint16 build_date;				
 	sint16 upkeep_cost;				// 0x182
 	uint8 pad_184[0x12];
-	uint16 var_196;
+
+	// In the game these two are often addressed together. Instead of right
+	// shifting reliability 8 bits, address them separately
+	uint8 reliability;
+	uint8 reliability_countdown;
+
 	// used in computing excitement, nausea, etc
 	uint8 var_198;
 	uint8 var_199;
@@ -132,7 +137,7 @@ typedef struct {
 	money32 profit;					// 0x1B4
 	uint8 queue_time[4];			// 0x1B8
 	uint8 pad_1BC[0x11];
-	uint8 var_1CD;
+	uint8 lift_hill_chain_speed;
 	uint16 guests_favourite;		// 0x1CE
 	uint32 lifecycle_flags;			// 0x1D0
 	uint8 pad_1D4[0x20];

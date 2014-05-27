@@ -275,12 +275,13 @@ void ride_debug_string(rct_ride *ride)
 	printf("var_158: %x\n", ride->var_158);
 	printf("build_date: %d\n", ride->build_date);
 	printf("upkeep_cost: %d\n", ride->upkeep_cost);
-	printf("var_196: %x\n", ride->var_196);
+	printf("reliability: %d\n", ride->reliability);
+	printf("reliability_count_down: %d\n", ride->reliability_countdown);
 	printf("var_198: %x\n", ride->var_198);
 	printf("var_199: %x\n", ride->var_199);
 	printf("profit: %x\n", ride->profit);
 	printf("queue_time: %d\n", ride->queue_time);
-	printf("var_1CD: %x\n", ride->var_1CD);
+	printf("lift_hill_chain_speed: %x\n", ride->lift_hill_chain_speed);
 	printf("guests_favourite: %d\n", ride->guests_favourite);
 	printf("lifecycle_flags: %x\n", ride->lifecycle_flags);
 	printf("var_1F4: %x\n", ride->var_1F4);

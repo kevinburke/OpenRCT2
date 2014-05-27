@@ -629,7 +629,7 @@ static void window_ride_list_scrollpaint()
 		case INFORMATION_TYPE_RELIABILITY:
 			// edx = RCT2_GLOBAL(0x009ACFA4 + (ride->var_001 * 4), uint32);
 
-			RCT2_GLOBAL(0x013CE952 + 2, uint16) = ride->var_196 >> 8;
+			RCT2_GLOBAL(0x013CE952 + 2, uint16) = ride->reliability;
 			formatSecondary = STR_RELIABILITY_LABEL;
 			break;
 		case INFORMATION_TYPE_DOWN_TIME:
@@ -800,7 +800,7 @@ static void window_ride_list_refresh_list(rct_window *w)
 		case INFORMATION_TYPE_RELIABILITY:
 			while (--k >= 0) {
 				otherRide = &(RCT2_ADDRESS(RCT2_ADDRESS_RIDE_LIST, rct_ride)[w->var_076[k]]);
-				if (ride->var_196 >> 8 <= otherRide->var_196 >> 8)
+				if (ride->reliability <= otherRide->reliability)
 					break;
 
 				swapper = w->var_076[k];
