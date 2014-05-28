@@ -119,6 +119,7 @@ typedef struct {
 	// value
 	uint16 satisfaction;             // 0x14A
 	uint8 var_14C;
+	// Bit 3 = ride has updated data?
 	uint8 var_14D;
 	uint8 pad_14E[0x0A];
 	// Only lower 8 bits used for popularity. Multiply by 4 to get onscreen
@@ -136,7 +137,7 @@ typedef struct {
 
 	// used in computing excitement, nausea, etc
 	uint8 var_198;
-	uint8 var_199;
+	uint8 downtime;					// 0x199
 	uint8 pad_19A[0x1A];
 	money32 profit;					// 0x1B4
 	uint8 queue_time[4];			// 0x1B8

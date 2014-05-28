@@ -247,7 +247,7 @@ int calculate_park_rating()
 
 			if (ride->type == RIDE_TYPE_NULL)
 				continue;
-			_ax += 100 - ride->var_199;
+			_ax += 100 - ride->downtime;
 
 			if (ride->excitement != -1){
 				total_ride_excitement += ride->excitement / 8;

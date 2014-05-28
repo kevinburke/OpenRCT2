@@ -280,7 +280,7 @@ void ride_debug_string(rct_ride *ride)
 	printf("reliability: %d\n", ride->reliability);
 	printf("reliability_count_down: %d\n", ride->reliability_countdown);
 	printf("var_198: %x\n", ride->var_198);
-	printf("var_199: %x\n", ride->var_199);
+	printf("downtime: %d\n", ride->downtime);
 	printf("profit: %x\n", ride->profit);
 	printf("queue_time: %d\n", ride->queue_time);
 	printf("lift_hill_chain_speed: %x\n", ride->lift_hill_chain_speed);
