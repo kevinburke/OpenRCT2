@@ -25,7 +25,8 @@
 
 #include <stdint.h>
 
-void go_karts_excitement(rct_ride *ride) {
+void go_karts_excitement(rct_ride *ride)
+{
 	if (ride->lifecycle_flags & RIDE_LIFECYCLE_TESTED == 0) {
 		return;
 	}
@@ -89,15 +90,79 @@ void go_karts_excitement(rct_ride *ride) {
 			nausea += tup.nausea;
 
 			// 658E36
+			uint32 scenery_excitement;
+			// This function gets a whole bunch of global values and adds them
+			// to the ride's excitement. Probably having to do with
+			// paths/scenery near the ride, if I had to guess.
+			RCT2_CALLFUNC_X(0x0065E277, 0, &scenery_excitement, 0, 0, 0, 0, 0);
+			scenery_excitement = scenery_excitement * 0x2BAF;
+			scenery_excitement = scenery_excitement >> 16;
+			excitement += scenery_excitement;
+
+			sub_65E557(ride);
 		}
 
 	}
 }
 
 /**
+ * rct2: 0x0065E557
+ */
+uint32 sub_65E557(rct_ride *ride)
+{
+	uint32 ecx = 0;
+	for (int i = 0; i < 4; i++) {
+		uint16 start = ride->station_starts[i];
+		if (start == 0xffff) {
+			continue;
+			// if all of them are 4, need to return
+		}
+		if (ride->type == RIDE_TYPE_MAZE) {
+			start = ride->entrances[0];
+		}
+		uint16 dx = ride->egress_array[i];
+		// cx, cl
+		uint16 lowstart = start & 0xff;
+		// ax
+		start = start & 0xff00;
+		start = start << 5;
+		lowstart = lowstart << 5;
+		dx = dx << 3;
+		uint32 fn_dx = 0;
+		RCT2_CALLFUNC_X(0x00662783, &start, 0, &lowstart, &fn_dx, 0, ride, 0);
+		if (dx > fn_dx) {
+			// 65E619
+			return 0x28;
+		} 
+		start = start - 0xA0;
+		lowstart = start - 0xA0;
+		uint8 dl = 0;
+		uint8 dh = 0;
+		if (start >= 0x1fff) {
+			start += 0x20;
+			dl++;
+			if (dl < 0x0B) {
+				// 65E5AE
+			} else {
+				start = start - 0x160;
+				dl = 0;
+				lowstart = lowstart + 0x20;
+				dh++;
+				if (dh < 0x0B) {
+					// 65E5AE
+				} else {
+					uint32 ebx = 0x2f;
+				}
+			}
+		}
+	}
+}
+
+/**
  * rct2: 0x0065E1C2
  */
-rating_tuple sub_65E1C2(rct_ride *ride) {
+rating_tuple sub_65E1C2(rct_ride *ride)
+{
 	uint32 excitement = 0;
 	uint32 intensity = 0;
 	uint32 nausea = 0;

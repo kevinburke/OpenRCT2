@@ -27,6 +27,7 @@
 void go_karts_excitement(rct_ride *ride);
 void crooked_house_excitement(rct_ride *ride);
 rating_tuple sub_65DDD1(rct_ride *ride);
+uint32 sub_65E557(rct_ride *ride);
 rating_tuple sub_65E1C2(rct_ride *ride);
 rating_tuple sub_65E139(rct_ride *ride);
 void sub_655FD6(rct_ride *ride);
