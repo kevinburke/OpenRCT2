@@ -111,48 +111,55 @@ void go_karts_excitement(rct_ride *ride)
 uint32 sub_65E557(rct_ride *ride)
 {
 	uint32 ecx = 0;
-	for (int i = 0; i < 4; i++) {
-		uint16 start = ride->station_starts[i];
+	uint16 start;
+	// Do it this way so we still have access to the index used after the loop.
+	int i = 0;
+	while (true) {
+		start = ride->station_starts[i];
 		if (start == 0xffff) {
+			i++;
+			if (i >= 4) {
+				return;
+			}
 			continue;
-			// if all of them are 4, need to return
 		}
 		if (ride->type == RIDE_TYPE_MAZE) {
 			start = ride->entrances[0];
 		}
-		uint16 dx = ride->egress_array[i];
-		// cx, cl
-		uint16 lowstart = start & 0xff;
-		// ax
-		start = start & 0xff00;
-		start = start << 5;
-		lowstart = lowstart << 5;
-		dx = dx << 3;
-		uint32 fn_dx = 0;
-		RCT2_CALLFUNC_X(0x00662783, &start, 0, &lowstart, &fn_dx, 0, ride, 0);
-		if (dx > fn_dx) {
-			// 65E619
-			return 0x28;
-		} 
-		start = start - 0xA0;
-		lowstart = start - 0xA0;
-		uint8 dl = 0;
-		uint8 dh = 0;
-		if (start >= 0x1fff) {
-			start += 0x20;
-			dl++;
-			if (dl < 0x0B) {
+		break;
+	}
+	uint16 dx = ride->egress_array[i];
+	// cx, cl
+	uint16 lowstart = start & 0xff;
+	// ax
+	start = start & 0xff00;
+	start = start << 5;
+	lowstart = lowstart << 5;
+	dx = dx << 3;
+	int fn_dx = 0;
+	RCT2_CALLFUNC_X(0x00662783, &start, 0, &lowstart, &fn_dx, 0, ride, 0);
+	if (dx > fn_dx) {
+		// 65E619
+		return 0x28;
+	} 
+	start = start - 0xA0;
+	lowstart = start - 0xA0;
+	uint8 dl = 0;
+	uint8 dh = 0;
+	if (start >= 0x1fff) {
+		start += 0x20;
+		dl++;
+		if (dl < 0x0B) {
+			// 65E5AE
+		} else {
+			start = start - 0x160;
+			dl = 0;
+			lowstart = lowstart + 0x20;
+			dh++;
+			if (dh < 0x0B) {
 				// 65E5AE
 			} else {
-				start = start - 0x160;
-				dl = 0;
-				lowstart = lowstart + 0x20;
-				dh++;
-				if (dh < 0x0B) {
-					// 65E5AE
-				} else {
-					uint32 ebx = 0x2f;
-				}
+				uint32 ebx = 0x2f;
 			}
 		}
 	}

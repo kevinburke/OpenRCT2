@@ -268,7 +268,7 @@ void ride_debug_string(rct_ride *ride)
 	printf("excitement: %d\n", ride->excitement);
 	printf("intensity: %d\n", ride->intensity);
 	printf("nausea: %d\n", ride->nausea);
-	printf("reliability (??): %d\n", ride->reliability);
+	printf("reliability ?: %d\n", ride->reliability);
 	printf("satisfaction: %d\n", (ride->satisfaction & 0xff) * 5);
 	printf("satisfaction high bits: %x\n", ride->satisfaction >> 8);
 	printf("var_14C: %x\n", ride->var_14C);
