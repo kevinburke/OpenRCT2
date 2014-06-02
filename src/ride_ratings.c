@@ -119,7 +119,7 @@ uint32 sub_65E557(rct_ride *ride)
 		if (start == 0xffff) {
 			i++;
 			if (i >= 4) {
-				return;
+				return 0;
 			}
 			continue;
 		}
@@ -128,7 +128,7 @@ uint32 sub_65E557(rct_ride *ride)
 		}
 		break;
 	}
-	uint16 dx = ride->egress_array[i];
+	uint16 dx = ride->station_heights[i];
 	// cx, cl
 	uint16 lowstart = start & 0xff;
 	// ax
@@ -140,7 +140,7 @@ uint32 sub_65E557(rct_ride *ride)
 	RCT2_CALLFUNC_X(0x00662783, &start, 0, &lowstart, &fn_dx, 0, ride, 0);
 	if (dx > fn_dx) {
 		// 65E619
-		return 0x28;
+		return 40;
 	} 
 	start = start - 0xA0;
 	lowstart = start - 0xA0;

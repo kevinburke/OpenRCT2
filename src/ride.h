@@ -57,10 +57,15 @@ typedef struct {
 	uint32 var_04C;
 	uint16 overall_view;			// 0x050
 	uint16 station_starts[4];		// 0x052
-	uint16 egress_array[4];			// 0x5A
+	uint8 station_heights[4];			// 0x5A
+	uint8 station_lengths[4];			// 0x5A
+
+	// Station signal flags? Train in loading position?
 	uint8 pad_062[8];
 	uint16 entrances[4];			// 0x06A
 	uint16 exits[4];				// 0x072
+
+	// May be the last peep in the queue line
 	uint8 pad_07A[0x0C];
 	uint16 train_car_map[1];		// 0x086 Points to the first car in the train
 	uint8 pad_088[0x3F];
