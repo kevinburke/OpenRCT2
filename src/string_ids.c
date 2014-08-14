@@ -1065,15 +1065,111 @@ char real_name_initials[] = {
 	'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'W'
 };
 
+#pragma region Format codes
+
+typedef struct {
+	char code;
+	char *token;
+} format_code_token;
+
+format_code_token format_code_tokens[] = {
+	{ FORMAT_MOVE_X,					"MOVE_X"				},
+	{ FORMAT_ADJUST_PALETTE,			"ADJUST_PALETTE"		},
+	{ FORMAT_NEWLINE,					"NEWLINE"				},
+	{ FORMAT_NEWLINE_SMALLER,			"NEWLINE_SMALLER"		},
+	{ FORMAT_TINYFONT,					"TINYFONT"				},
+	{ FORMAT_BIGFONT,					"BIGFONT"				},
+	{ FORMAT_MEDIUMFONT,				"MEDIUMFONT"			},
+	{ FORMAT_SMALLFONT,					"SMALLFONT"				},
+	{ FORMAT_OUTLINE,					"OUTLINE"				},
+	{ FORMAT_OUTLINE_OFF,				"OUTLINE_OFF"			},
+	{ FORMAT_WINDOW_COLOUR_1,			"WINDOW_COLOUR_1"		},
+	{ FORMAT_WINDOW_COLOUR_2,			"WINDOW_COLOUR_2"		},
+	{ FORMAT_WINDOW_COLOUR_3,			"WINDOW_COLOUR_3"		},
+	{ FORMAT_NEWLINE_X_Y,				"NEWLINE_X_Y"			},
+	{ FORMAT_INLINE_SPRITE,				"INLINE_SPRITE"			},
+	{ FORMAT_ENDQUOTES,					"ENDQUOTES"				},
+	{ FORMAT_COMMA32,					"COMMA32"				},
+	{ FORMAT_INT32,						"INT32"					},
+	{ FORMAT_COMMA2DP32,				"COMMA2DP32"			},
+	{ FORMAT_COMMA16,					"COMMA16"				},
+	{ FORMAT_UINT16,					"UINT16"				},
+	{ FORMAT_CURRENCY2DP,				"CURRENCY2DP"			},
+	{ FORMAT_CURRENCY,					"CURRENCY"				},
+	{ FORMAT_STRINGID,					"STRINGID"				},
+	{ FORMAT_STRINGID2,					"STRINGID2"				},
+	{ FORMAT_STRING,					"STRING"				},
+	{ FORMAT_MONTHYEAR,					"MONTHYEAR"				},
+	{ FORMAT_MONTH,						"MONTH"					},
+	{ FORMAT_VELOCITY,					"VELOCITY"				},
+	{ FORMAT_POP16,						"POP16"					},
+	{ FORMAT_PUSH16,					"PUSH16"				},
+	{ FORMAT_DURATION,					"DURATION"				},
+	{ FORMAT_REALTIME,					"REALTIME"				},
+	{ FORMAT_LENGTH,					"LENGTH"				},
+	{ FORMAT_SPRITE,					"SPRITE"				},
+	{ FORMAT_BLACK,						"BLACK"					},
+	{ FORMAT_GREY,						"GREY"					},
+	{ FORMAT_WHITE,						"WHITE"					},
+	{ FORMAT_RED,						"RED"					},
+	{ FORMAT_GREEN,						"GREEN"					},
+	{ FORMAT_YELLOW,					"YELLOW"				},
+	{ FORMAT_TOPAZ,						"TOPAZ"					},
+	{ FORMAT_CELADON,					"CELADON"				},
+	{ FORMAT_BABYBLUE,					"BABYBLUE"				},
+	{ FORMAT_PALELAVENDER,				"PALELAVENDER"			},
+	{ FORMAT_PALEGOLD,					"PALEGOLD"				},
+	{ FORMAT_LIGHTPINK,					"LIGHTPINK"				},
+	{ FORMAT_PEARLAQUA,					"PEARLAQUA"				},
+	{ FORMAT_PALESILVER,				"PALESILVER"			},
+	{ FORMAT_AMINUSCULE,				"AMINUSCULE"			},
+	{ FORMAT_UP,						"UP"					},
+	{ FORMAT_POUND,						"POUND"					},
+	{ FORMAT_YEN,						"YEN"					},
+	{ FORMAT_COPYRIGHT,					"COPYRIGHT"				},
+	{ FORMAT_DOWN,						"DOWN"					},
+	{ FORMAT_LEFTGUILLEMET,				"LEFTGUILLEMET"			},
+	{ FORMAT_TICK,						"TICK"					},
+	{ FORMAT_CROSS,						"CROSS"					},
+	{ FORMAT_RIGHT,						"RIGHT"					},
+	{ FORMAT_DEGREE,					"DEGREE"				},
+	{ FORMAT_SQUARED,					"SQUARED"				},
+	{ FORMAT_OPENQUOTES,				"OPENQUOTES"			},
+	{ FORMAT_EURO,						"EURO"					},
+	{ FORMAT_APPROX,					"APPROX"				},
+	{ FORMAT_POWERNEGATIVEONE,			"POWERNEGATIVEONE"		},
+	{ FORMAT_BULLET,					"BULLET"				},
+	{ FORMAT_RIGHTGUILLEMET,			"RIGHTGUILLEMET"		},
+	{ FORMAT_SMALLUP,					"SMALLUP"				},
+	{ FORMAT_SMALLDOWN,					"SMALLDOWN"				},
+	{ FORMAT_LEFT,						"LEFT"					},
+	{ FORMAT_INVERTEDQUESTION,			"INVERTEDQUESTION"		}
+};
+
+char format_get_code(const char *token)
+{
+	int i;
+	for (i = 0; i < countof(format_code_tokens); i++)
+		if (_strcmpi(token, format_code_tokens[i].token) == 0)
+			return format_code_tokens[i].code;
+	return 0;
+}
+
+const char *format_get_token(char code)
+{
+	int i;
+	for (i = 0; i < countof(format_code_tokens); i++)
+		if (code == format_code_tokens[i].code)
+			return format_code_tokens[i].token;
+	return 0;
+}
+
+#pragma endregion
+
 void format_string_part_from_raw(char **dest, const char *src, char **args);
 void format_string_part(char **dest, rct_string_id format, char **args);
 
-const char *get_string(rct_string_id id)
-{
-	return RCT2_ADDRESS(0x009BF2D4, const char*)[id];
-}
-
-void format_integer(char **dest, int value)
+void format_integer(char **dest, long long value)
 {
 	int digit;
 	char *dst = *dest;
@@ -1113,7 +1209,7 @@ void format_integer(char **dest, int value)
 	*dest = finish;
 }
 
-void format_comma_separated_integer(char **dest, int value)
+void format_comma_separated_integer(char **dest, long long value)
 {
 	int digit, groupIndex;
 	char *dst = *dest;
@@ -1161,7 +1257,7 @@ void format_comma_separated_integer(char **dest, int value)
 	*dest = finish;
 }
 
-void format_comma_separated_fixed_2dp(char **dest, int value)
+void format_comma_separated_fixed_2dp(char **dest, long long value)
 {
 	int digit, groupIndex;
 	char *dst = *dest;
@@ -1218,9 +1314,11 @@ void format_comma_separated_fixed_2dp(char **dest, int value)
 	*dest = finish;
 }
 
-void format_currency(char **dest, int value)
+void format_currency(char **dest, long long value)
 {
-	int rate = g_currency_specs[gGeneral_config.currency_format].rate;
+	const rct_currency_spec *currencySpec = &g_currency_specs[gGeneral_config.currency_format];
+
+	int rate = currencySpec->rate;
 	value *= rate;
 
 	// Negative sign
@@ -1230,26 +1328,29 @@ void format_currency(char **dest, int value)
 	}
 
 	// Currency symbol
-	const char *symbol = g_currency_specs[gGeneral_config.currency_format].symbol;
+	const char *symbol = currencySpec->symbol;
+
 	// Prefix
-	if (g_currency_specs[gGeneral_config.currency_format].prefix) {
+	if (currencySpec->affix == CURRENCY_PREFIX) {
 		strcpy(*dest, symbol);
 		*dest += strlen(*dest);
 	}
 
 	// Divide by 100 to get rid of the pennies
-	format_comma_separated_integer(dest, value/100);
+	format_comma_separated_integer(dest, value / 100);
 
 	// Currency symbol suffix
-	if (!g_currency_specs[gGeneral_config.currency_format].prefix) {
+	if (currencySpec->affix == CURRENCY_SUFFIX) {
 		strcpy(*dest, symbol);
 		*dest += strlen(*dest);
 	}
 }
 
-void format_currency_2dp(char **dest, int value)
+void format_currency_2dp(char **dest, long long value)
 {
-	int rate = g_currency_specs[gGeneral_config.currency_format].rate;
+	const rct_currency_spec *currencySpec = &g_currency_specs[gGeneral_config.currency_format];
+
+	int rate = currencySpec->rate;
 	value *= rate;
 
 	// Negative sign
@@ -1259,22 +1360,23 @@ void format_currency_2dp(char **dest, int value)
 	}
 
 	// Currency symbol
-	const char *symbol = g_currency_specs[gGeneral_config.currency_format].symbol;
+	const char *symbol = currencySpec->symbol;
+
 	// Prefix
-	if (g_currency_specs[gGeneral_config.currency_format].prefix) {
+	if (currencySpec->affix == CURRENCY_PREFIX) {
 		strcpy(*dest, symbol);
 		*dest += strlen(*dest);
 	}
 
 	// Drop the pennies for "large" currencies
 	if (rate > 10) {
-		format_comma_separated_integer(dest, value/100);
+		format_comma_separated_integer(dest, value / 100);
 	} else {
 		format_comma_separated_fixed_2dp(dest, value);
 	}
 
 	// Currency symbol suffix
-	if (!g_currency_specs[gGeneral_config.currency_format].prefix) {
+	if (currencySpec->affix == CURRENCY_SUFFIX) {
 		strcpy(*dest, symbol);
 		*dest += strlen(*dest);
 	}
@@ -1563,81 +1665,15 @@ void generate_string_file()
 
 		fprintf(f, "STR_%04d    :", i);
 		while (*c != '\0') {
-			switch (*c) {
-			case 7:		fputs("{TINYFONT}", f);				break;
-			case 8:		fputs("{BIGFONT}", f);				break;
-			case 9:		fputs("{MEDIUMFONT}", f);			break;
-			case 10:	fputs("{SMALLFONT}", f);			break;
-
-			case 11:	fputs("{OUTLINE}", f);				break;
-
-			case 34:	fputs("{ENDQUOTES}", f);			break;
-
-			case 123:	fputs("{COMMA32}", f);				break;
-			case 124:	fputs("{INT32}", f);				break;
-			case 125:	fputs("{COMMA2DP32}", f);			break;
-			case 126:	fputs("{COMMA16}", f);				break;
-			case 127:	fputs("{UINT16}", f);				break;
-			case 128:	fputs("{CURRENCY2DP}", f);			break;
-			case 129:	fputs("{CURRENCY}", f);				break;
-			case 130:	fputs("{STRINGID}", f);				break;
-			case 131:	fputs("{STRINGID2}", f);			break;
-			case 132:	fputs("{STRING}", f);				break;
-			case 133:	fputs("{MONTHYEAR}", f);			break;
-			case 134:	fputs("{MONTH}", f);				break;
-			case 135:	fputs("{VELOCITY}", f);				break;
-			case 136:	fputs("{POP16}", f);				break;
-			case 137:	fputs("{PUSH16}", f);				break;
-			case 138:	fputs("{DURATION}", f);				break;
-			case 139:	fputs("{REALTIME}", f);				break;
-			case 140:	fputs("{LENGTH}", f);				break;
-			case 141:	fputs("{SPRITE}", f);				break;
-
-			case 142:	fputs("{BLACK}", f);				break;
-			case 143:	fputs("{GREY}", f);					break;
-			case 144:	fputs("{WHITE}", f);				break;
-			case 145:	fputs("{RED}", f);					break;
-			case 146:	fputs("{GREEN}", f);				break;
-			case 147:	fputs("{YELLOW}", f);				break;
-			case 148:	fputs("{TOPAZ}", f);				break;
-			case 149:	fputs("{CELADON}", f);				break;
-			case 150:	fputs("{BABYBLUE}", f);				break;
-			case 151:	fputs("{PALELAVENDER}", f);			break;
-			case 152:	fputs("{PALEGOLD}", f);				break;
-			case 153:	fputs("{LIGHTPINK}", f);			break;
-			case 154:	fputs("{PEARLAQUA}", f);			break;
-			case 155:	fputs("{PALESILVER}", f);			break;
-
-			case 159:	fputs("{AMINUSCULE}", f);			break;
-			case 160:	fputs("{UP}", f);					break;
-			case 163:	fputs("{POUND}", f);				break;
-			case 165:	fputs("{YEN}", f);					break;
-			case 169:	fputs("{COPYRIGHT}", f);			break;
-			case 170:	fputs("{DOWN}", f);					break;
-			case 171:	fputs("{LEFTGUILLEMET}", f);		break;
-			case 172:	fputs("{TICK}", f);					break;
-			case 173:	fputs("{CROSS}", f);				break;
-			case 175:	fputs("{RIGHT}", f);				break;
-			case 176:	fputs("{DEGREE}", f);				break;
-			case 178:	fputs("{SQUARED}", f);				break;
-			case 180:	fputs("{OPENQUOTES}", f);			break;
-			case 181:	fputs("{EURO}", f);					break;
-			case 184:	fputs("{APPROX}", f);				break;
-			case 185:	fputs("{POWERNEGATIVEONE}", f);		break;
-			case 186:	fputs("{BULLET}", f);				break;
-			case 187:	fputs("{RIGHTGUILLEMET}", f);		break;
-			case 188:	fputs("{SMALLUP}", f);				break;
-			case 189:	fputs("{SMALLDOWN}", f);			break;
-			case 190:	fputs("{LEFT}", f);					break;
-			case 191:	fputs("{INVERTEDQUESTION}", f);		break;
-			default:
+			const char *token = format_get_token(*c);
+			if (token != NULL) {
+				fprintf(f, "{%s}", token);
+			} else {
 				if (*c < 32 || *c > 127)
 					fprintf(f, "{%d}", *c);
 				else
 					fputc(*c, f);
-				break;
 			}
-
 			c++;
 		}
 		fputc('\n', f);
@@ -1654,4 +1690,108 @@ void reset_saved_strings() {
 	for (int i = 0; i < 1024; i++) {
 		RCT2_ADDRESS(0x135A8F4, uint8)[i * 32] = 0;
 	}
+}
+
+// Buffer storing all the string data
+long language_buffer_size = 0;
+char *language_buffer = NULL;
+
+// List of string pointers into the string data
+int language_num_strings = 0;
+char **language_strings = NULL;
+
+const char *get_string(rct_string_id id)
+{
+	const char *rct = RCT2_ADDRESS(0x009BF2D4, const char*)[id];
+	const char *openrct = language_strings == NULL ? NULL : language_strings[id];
+	const char *str = (openrct == NULL || strlen(openrct) == 0 ? rct : openrct);
+	return str == NULL ? "" : str;
+}
+
+/**
+ * Partial support to open a uncompiled language file which parses tokens and converts them to the corresponding character
+ * code. Due to resource strings (strings in scenarios and objects) being written to the original game's string table,
+ * get_string will use those if the same entry in the loaded language is empty.
+ * 
+ * Unsure at how the original game decides which entries to write resource strings to, but this could affect adding new
+ * strings for the time being. Further investigation is required.
+ *
+ * Also note that all strings are currently still ASCII. It probably can't be converted to UTF-8 until all game functions that
+ * read / write strings in some way is decompiled. The original game used a DIY extended 8-bit extended ASCII set for special
+ * characters, format codes and accents.
+ *
+ * In terms of reading the language files, the STR_XXXX part is completely ignored at the moment. It just parses each line from
+ * the colon and thus not allowing gaps in the string indices.
+ */
+int language_open(const char *filename)
+{
+	FILE *f = fopen(filename, "rb");
+	if (f == NULL)
+		return 0;
+
+	fseek(f, 0, SEEK_END);
+	language_buffer_size = ftell(f);
+	language_buffer = calloc(1, language_buffer_size);
+	fseek(f, 0, SEEK_SET);
+	fread(language_buffer, language_buffer_size, 1, f);
+	fclose(f);
+
+	language_strings = calloc(STR_COUNT, sizeof(char*));
+
+	char *dst, *token;
+	char tokenBuffer[64];
+	int i, stringIndex = 0, mode = 0;
+	for (i = 0; i < language_buffer_size; i++) {
+		char *src = &language_buffer[i];
+
+		switch (mode) {
+		case 0:
+			// Search for colon
+			if (*src == ':') {
+				dst = src + 1;
+				language_strings[stringIndex++] = dst;
+				mode = 1;
+			}
+			break;
+		case 1:
+			// Copy string over, stop at line break
+			if (*src == '{') {
+				token = src + 1;
+				mode = 2;
+			} else if (*src == '\n' || *src == '\r') {
+				*dst = 0;
+				mode = 0;
+			} else {
+				*dst++ = *src;
+			}
+			break;
+		case 2:
+			// Read token, convert to code
+			if (*src == '}') {
+				int tokenLength = min(src - token, sizeof(tokenBuffer) - 1);
+				memcpy(tokenBuffer, token, tokenLength);
+				tokenBuffer[tokenLength] = 0;
+				char code = format_get_code(tokenBuffer);
+				if (code == 0)
+					code = atoi(tokenBuffer);
+				*dst++ = code;
+				mode = 1;
+			}
+			break;
+		}
+	}
+	language_num_strings = stringIndex;
+
+	return 1;
+}
+
+void language_close()
+{
+	if (language_buffer != NULL)
+		free(language_buffer);
+	language_buffer_size = 0;
+
+	if (language_strings != NULL)
+		free(language_strings);
+	language_num_strings = 0;
 }

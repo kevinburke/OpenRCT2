@@ -647,19 +647,19 @@ static void window_ride_list_draw_tab_images(rct_drawpixelinfo *dpi, rct_window 
 	sprite_idx = SPR_TAB_RIDE_0;
 	if (w->page == PAGE_RIDES)
 		sprite_idx += w->frame_no / 4;
-	gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_1].left, w->y + w->widgets[WIDX_TAB_1].top);
+	gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_1].left, w->y + w->widgets[WIDX_TAB_1].top, 0);
 
 	// Shops and stalls tab
 	sprite_idx = SPR_TAB_SHOPS_AND_STALLS_0;
 	if (w->page == PAGE_SHOPS_AND_STALLS)
 		sprite_idx += w->frame_no / 4;
-	gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_2].left, w->y + w->widgets[WIDX_TAB_2].top);
+	gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_2].left, w->y + w->widgets[WIDX_TAB_2].top, 0);
 
 	// Information kiosks and facilities tab
 	sprite_idx = SPR_TAB_KIOSKS_AND_FACILITIES_0;
 	if (w->page == PAGE_KIOSKS_AND_FACILITIES)
 		sprite_idx += (w->frame_no / 4) % 8;
-	gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_3].left, w->y + w->widgets[WIDX_TAB_3].top);
+	gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_3].left, w->y + w->widgets[WIDX_TAB_3].top, 0);
 }
 
 
@@ -807,7 +807,7 @@ static void window_ride_list_close_all(rct_window *w)
 		RCT2_GLOBAL(0x013CE952 + 6, uint16) = w->scrolls[0].v_top;
 		RCT2_GLOBAL(0x013CE952 + 8, uint32) = w->scrolls[0].v_bottom;
 
-		game_do_command(0, 1, 0, i, 8, 0, 0);
+		game_do_command(0, 1, 0, i, GAME_COMMAND_SET_RIDE_OPEN, 0, 0);
 	}
 }
 
@@ -824,6 +824,6 @@ static void window_ride_list_open_all(rct_window *w)
 		RCT2_GLOBAL(0x013CE952 + 6, uint16) = w->scrolls[0].v_top;
 		RCT2_GLOBAL(0x013CE952 + 8, uint32) = w->scrolls[0].v_bottom;
 
-		game_do_command(0, 1, 0, (1 << 8) | i, 8, 0, 0);
+		game_do_command(0, 1, 0, (1 << 8) | i, GAME_COMMAND_SET_RIDE_OPEN, 0, 0);
 	}
 }

@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (c) 2014 Ted John, Peter Hill
+ * Copyright (c) 2014 Ted John, Peter Hill, Duncan Frost
  * OpenRCT2, an open source clone of Roller Coaster Tycoon 2.
  *
  * This file is part of OpenRCT2.
@@ -18,39 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
-#ifndef CURRENCY_H
-#define CURRENCY_H
+#ifndef _GRAPH_H_
+#define _GRAPH_H_
 
-// List of currencies
-typedef enum {
-	CURRENCY_POUNDS,			// British Pound
-	CURRENCY_DOLLARS,			// US Dollar
-	CURRENCY_FRANC,				// French Franc
-	CURRENCY_DEUTSCHMARK,		// Deutsche Mark
-	CURRENCY_YEN,				// Japanese Yen
-	CURRENCY_PESETA,			// Spanish Peseta
-	CURRENCY_LIRA,				// Italian Lira
-	CURRENCY_GUILDERS,			// Dutch Gilder
-	CURRENCY_KRONA,				// Swedish Krona
-	CURRENCY_EUROS,				// Euro
-	
-	CURRENCY_END				// Last item
-} CURRENCY_TYPE;
+#include "gfx.h"
+#include "rct2.h"
 
-typedef enum {
-	CURRENCY_PREFIX,
-	CURRENCY_SUFFIX
-} CURRENCY_AFFIX;
-
-// Currency format specification - inspired by OpenTTD
-typedef struct {
-	// Rate is relative to 0.1 GBP
-	int rate;
-	char symbol[8];
-	char affix;
-} rct_currency_spec;
-
-// List of currency formats
-extern const rct_currency_spec g_currency_specs[CURRENCY_END];
+void graph_draw_uint8(rct_drawpixelinfo *dpi, uint8 *history, int count, int baseX, int baseY);
+void graph_draw_money32(rct_drawpixelinfo *dpi, money32 *history, int count, int baseX, int baseY, int modifier, int offset);
 
 #endif

@@ -329,7 +329,7 @@ typedef struct {
 	sint16 var_18;
 	sint16 var_1A;
 	sint16 var_1C;
-	uint8 var_1E;
+	uint8 sprite_direction;
 	uint8 pad_1F[3];
 	uint16 name_string_idx;			// 0x22
 	uint16 next_x;					// 0x24
@@ -444,5 +444,6 @@ void peep_problem_warnings_update();
 void peep_update_crowd_noise();
 void peep_applause();
 rct_peep *peep_generate(int x, int y, int z);
+void get_arguments_from_action(rct_peep* peep, uint32 *argument_1, uint32* argument_2);
 
 #endif

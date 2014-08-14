@@ -51,6 +51,86 @@ void game_handle_keyboard_input();
 
 void process_mouse_over(int x, int y);
 
+typedef void(*draw_rain_func)(int left, int top, int width, int height);
+
+/**
+*
+*  rct2: 0x00684114
+*/
+void draw_light_rain(int left, int top, int width, int height){
+	int edi = -RCT2_GLOBAL(0x00F663AC, int) + 8;
+	int esi = (RCT2_GLOBAL(0x00F663AC, int) * 3) + 7;
+	esi = -esi;
+
+	edi += left;
+	esi += top;
+
+	gfx_draw_rain(left, top, width, height, edi, esi);
+
+	edi = -RCT2_GLOBAL(0x00F663AC, int) + 0x18;
+	esi = (RCT2_GLOBAL(0x00F663AC, int) * 4) + 0x0D;
+	esi = -esi;
+
+	edi += left;
+	esi += top;
+	gfx_draw_rain(left, top, width, height, edi, esi);
+}
+
+/**
+*
+*  rct2: 0x0068416D
+*/
+void draw_heavy_rain(int left, int top, int width, int height){
+	int edi = -RCT2_GLOBAL(0x00F663AC, int);
+	int esi = RCT2_GLOBAL(0x00F663AC, int) * 5;
+	esi = -esi;
+
+	edi += left;
+	esi += top;
+
+	gfx_draw_rain(left, top, width, height, edi, esi);
+
+	edi = -RCT2_GLOBAL(0x00F663AC, int) + 0x10;
+	esi = (RCT2_GLOBAL(0x00F663AC, int) * 6) + 5;
+	esi = -esi;
+
+	edi += left;
+	esi += top;
+
+	gfx_draw_rain(left, top, width, height, edi, esi);
+
+	edi = -RCT2_GLOBAL(0x00F663AC, int) + 8;
+	esi = (RCT2_GLOBAL(0x00F663AC, int) * 3) + 7;
+	esi = -esi;
+
+	edi += left;
+	esi += top;
+
+	gfx_draw_rain(left, top, width, height, edi, esi);
+
+	edi = -RCT2_GLOBAL(0x00F663AC, int) + 0x18;
+	esi = (RCT2_GLOBAL(0x00F663AC, int) * 4) + 0x0D;
+	esi = -esi;
+
+	edi += left;
+	esi += top;
+
+	gfx_draw_rain(left, top, width, height, edi, esi);
+}
+
+/**
+*
+*  rct2: 0x009AC058
+*/
+const draw_rain_func draw_rain_function[] = {
+	NULL,
+	&draw_light_rain,	// Light rain
+	&draw_heavy_rain	// Heavy rain 
+};
+
+
+
+
 /**
 *
 *  rct2: 0x006ED801
@@ -248,7 +328,7 @@ void call_draw_rain_func(rct_window* w, short left, short right, short top, shor
 	int width = right - left;
 	int height = bottom - top;
 
-	RCT2_CALLPROC_X(draw_rain_func, left, top, width, height, 0, 0, 0);
+	draw_rain_function[draw_rain_func](left, top, width, height);
 }
 
 /**
@@ -348,13 +428,13 @@ void update_rain_animation()
 			(rct_drawpixelinfo*)RCT2_ADDRESS_SCREEN_DPI,
 			RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_SPRITE, uint32),
 			RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_X, sint16),
-			RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_Y, sint16)
+			RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_Y, sint16), 0
 		);
 	}
 
 	// Get rain draw function and draw rain
-	uint32 draw_rain_func = RCT2_ADDRESS(0x009AC058, uint32)[RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_RAIN_LEVEL, uint8)];
-	if (draw_rain_func != 0xFFFFFFFF && !(RCT2_GLOBAL(0x009DEA6F, uint8) & 1))
+	uint32 draw_rain_func = RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_RAIN_LEVEL, uint8);
+	if (draw_rain_func > 0 && !(RCT2_GLOBAL(0x009DEA6F, uint8) & 1))
 		draw_rain_animation(draw_rain_func);
 }
 
@@ -495,7 +575,7 @@ void game_handle_input()
 
 	if (RCT2_GLOBAL(0x009DEA64, uint16) & 2) {
 		RCT2_GLOBAL(0x009DEA64, uint16) &= ~2;
-		game_do_command(0, 1, 0, 0, 5, 2, 0); 
+		game_do_command(0, 1, 0, 0, GAME_COMMAND_LOAD_OR_QUIT, 2, 0); 
 	}
 
 	if (RCT2_GLOBAL(0x009ABDF2, uint8) != 0) {
@@ -2009,26 +2089,39 @@ static uint32 game_do_command_table[58];
  */
 int game_do_command(int eax, int ebx, int ecx, int edx, int esi, int edi, int ebp)
 {
+	return game_do_command_p(esi, &eax, &ebx, &ecx, &edx, &esi, &edi, &ebp);
+}
+
+/**
+*
+*  rct2: 0x006677F2 with pointers as arguments
+*
+* @param flags (ebx)
+* @param command (esi)
+*/
+int game_do_command_p(int command, int *eax, int *ebx, int *ecx, int *edx, int *esi, int *edi, int *ebp)
+{
 	int cost, flags, insufficientFunds;
 	int original_ebx, original_edx, original_esi, original_edi, original_ebp;
 
-	original_ebx = ebx;
-	original_edx = edx;
-	original_esi = esi;
-	original_edi = edi;
-	original_ebp = ebp;
+	*esi = command;
+	original_ebx = *ebx;
+	original_edx = *edx;
+	original_esi = *esi;
+	original_edi = *edi;
+	original_ebp = *ebp;
 
-	flags = ebx;
+	flags = *ebx;
 	RCT2_GLOBAL(RCT2_ADDRESS_GAME_COMMAND_ERROR_TEXT, uint16) = 0xFFFF;
 
 	// Increment nest count
 	RCT2_GLOBAL(0x009A8C28, uint8)++;
 
-	ebx &= ~1;
+	*ebx &= ~1;
 
 	// Primary command
-	RCT2_CALLFUNC_X(game_do_command_table[esi], &eax, &ebx, &ecx, &edx, &esi, &edi, &ebp);
-	cost = ebx;
+	RCT2_CALLFUNC_X(game_do_command_table[command], eax, ebx, ecx, edx, esi, edi, ebp);
+	cost = *ebx;
 
 	if (cost != 0x80000000) {
 		// Check funds
@@ -2037,11 +2130,11 @@ int game_do_command(int eax, int ebx, int ecx, int edx, int esi, int edi, int eb
 			insufficientFunds = game_check_affordability(cost);
 
 		if (insufficientFunds != 0x80000000) {
-			ebx = original_ebx;
-			edx = original_edx;
-			esi = original_esi;
-			edi = original_edi;
-			ebp = original_ebp;
+			*ebx = original_ebx;
+			*edx = original_edx;
+			*esi = original_esi;
+			*edi = original_edi;
+			*ebp = original_ebp;
 
 			if (!(flags & 1)) {
 				// Decrement nest count
@@ -2050,11 +2143,11 @@ int game_do_command(int eax, int ebx, int ecx, int edx, int esi, int edi, int eb
 			}
 
 			// Secondary command
-			RCT2_CALLFUNC_X(game_do_command_table[esi], &eax, &ebx, &ecx, &edx, &esi, &edi, &ebp);
-			edx = ebx;
+			RCT2_CALLFUNC_X(game_do_command_table[command], eax, ebx, ecx, edx, esi, edi, ebp);
+			*edx = *ebx;
 
-			if (edx != 0x80000000 && edx < cost)
-				cost = edx;
+			if (*edx != 0x80000000 && *edx < cost)
+				cost = *edx;
 
 			// Decrement nest count
 			RCT2_GLOBAL(0x009A8C28, uint8)--;
@@ -2088,6 +2181,7 @@ int game_do_command(int eax, int ebx, int ecx, int edx, int esi, int edi, int eb
 
 	return 0x80000000;
 }
+
 
 /**
  * 
@@ -2170,6 +2264,54 @@ static void game_load_or_quit()
 	__asm__ ( "mov ebx, 0 "  );
 	#endif
 
+}
+
+/**
+*
+*  rct2: 0x00669E55
+*/
+static void game_update_staff_colour()
+{
+	byte tabIndex, colour, _bl;
+	int spriteIndex;
+	rct_peep *peep;
+	
+	#ifdef _MSC_VER
+	__asm mov _bl, bl
+	#else
+	__asm__("mov %[_bl], bl " : [_bl] "+m" (_bl));
+	#endif
+
+	#ifdef _MSC_VER
+	__asm mov tabIndex, bh
+	#else
+	__asm__("mov %[tabIndex], bh " : [tabIndex] "+m" (tabIndex));
+	#endif
+
+	#ifdef _MSC_VER
+	__asm mov colour, dh
+	#else
+	__asm__("mov %[colour], bh " : [colour] "+m" (colour));
+	#endif
+
+	if (_bl & 1) {
+		RCT2_ADDRESS(RCT2_ADDRESS_HANDYMAN_COLOUR, uint8)[tabIndex] = colour;
+
+		FOR_ALL_PEEPS(spriteIndex, peep) {
+			if (peep->type == PEEP_TYPE_STAFF && peep->staff_type == tabIndex) {
+				peep->tshirt_colour = colour;
+				peep->trousers_colour = colour;
+			}
+		}
+	}
+
+	gfx_invalidate_screen();
+	
+	#ifdef _MSC_VER
+	__asm mov ebx, 0
+	#else
+	__asm__("mov ebx, 0 ");
+	#endif
 }
 
 /**
@@ -2408,7 +2550,7 @@ char save_game()
 	RCT2_CALLPROC_X(0x006754F5, eax, 0, 0, 0, 0, 0, 0);
 	// check success?
 
-	game_do_command(0, 1047, 0, -1, 0, 0, 0);
+	game_do_command(0, 1047, 0, -1, GAME_COMMAND_0, 0, 0);
 	gfx_invalidate_screen();
 	
 	return 1;
@@ -2431,14 +2573,14 @@ void rct2_exit()
 void game_load_or_quit_no_save_prompt()
 {
 	if (RCT2_GLOBAL(RCT2_ADDRESS_SAVE_PROMPT_MODE, uint16) < 1) {
-		game_do_command(0, 1, 0, 1, 5, 0, 0);
+		game_do_command(0, 1, 0, 1, GAME_COMMAND_LOAD_OR_QUIT, 0, 0);
 		tool_cancel();
 		if (RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 2)
 			load_landscape();
 		else
 			load_game();
 	} else if (RCT2_GLOBAL(RCT2_ADDRESS_SAVE_PROMPT_MODE, uint16) == 1) {
-		game_do_command(0, 1, 0, 1, 5, 0, 0);
+		game_do_command(0, 1, 0, 1, GAME_COMMAND_LOAD_OR_QUIT, 0, 0);
 		if (RCT2_GLOBAL(0x009DE518, uint32) & (1 << 5)) {
 			RCT2_CALLPROC_EBPSAFE(0x0040705E);
 			RCT2_GLOBAL(0x009DE518, uint32) &= ~(1 << 5);
@@ -2463,7 +2605,7 @@ static uint32 game_do_command_table[58] = {
 	0x006B49D9,
 	0x006B4EA6,
 	0x006B52D4,
-	0x006B578B,
+	0x006B578B, // 10
 	0x006B5559,
 	0x006660A8,
 	0x0066640B,
@@ -2473,7 +2615,7 @@ static uint32 game_do_command_table[58] = {
 	0x006A61DE,
 	0x006A68AE,
 	0x006A67C0,
-	0x00663CCD,
+	0x00663CCD, // 20
 	0x006B53E9,
 	0x00698D6C,
 	0x0068C542,
@@ -2483,7 +2625,7 @@ static uint32 game_do_command_table[58] = {
 	0x006E6878,
 	0x006C5AE9,
 	0x006BEFA1,
-	0x006C09D1,
+	0x006C09D1, // 30
 	0x006C0B83,
 	0x006C0BB5,
 	0x00669C6D,
@@ -2493,7 +2635,7 @@ static uint32 game_do_command_table[58] = {
 	0x00666A63,
 	0x006CD8CE,
 	0x00669E30,
-	0x00669E55,
+	(uint32)game_update_staff_colour, // 40
 	0x006E519A,
 	0x006E5597,
 	0x006B893C,
@@ -2503,7 +2645,7 @@ static uint32 game_do_command_table[58] = {
 	0x006D13FE,
 	0x0069E73C,
 	0x006CDEE4,
-	0x006B9E6D,
+	0x006B9E6D, // 50
 	0x006BA058,
 	0x006E0F26,
 	0x006E56B5,

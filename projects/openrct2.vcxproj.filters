@@ -16,6 +16,12 @@
     <Filter Include="Windows">
       <UniqueIdentifier>{611458dc-7dd2-4c37-af0f-306cf9d85fb9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data">
+      <UniqueIdentifier>{ee2e3a6f-1209-407b-8000-a6a4b88d28d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data\Language">
+      <UniqueIdentifier>{b344ca0f-b412-4924-be08-54bb6f83c3dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\addresses.h">
@@ -142,6 +148,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\cursors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\graph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -344,10 +353,21 @@
     <ClCompile Include="..\src\currency.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\graph.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\window_new_campaign.c">
+      <Filter>Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\openrct2.exe">
       <Filter>Resource Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\data\language\english.txt">
+      <Filter>Data\Language</Filter>
+    </Text>
   </ItemGroup>
 </Project>

@@ -89,7 +89,7 @@ static rct_widget window_cheats_money_widgets[] = {
 	{ WWT_TAB,				1,	3,			33,		17,		43,			0x2000144E,		2462},					// tab 1
 	{ WWT_TAB,				1,	34,			64,		17,		43,			0x2000144E,		2462},					// tab 2
 	{ WWT_TAB,				1,	65,			95,		17,		43,			0x2000144E,		2462},					// tab 3
-	{ WWT_CLOSEBOX,			1,	XPL(0),		WPL(0),	YPL(1),	HPL(1),		STR_VERY_HIGH,	STR_VERY_HIGH},			// high money
+	{ WWT_CLOSEBOX,			1,	XPL(0),		WPL(0),	YPL(1),	HPL(1),		2760,			STR_VERY_HIGH},			// high money
 	{ WWT_CLOSEBOX,			1,	XPL(0),		WPL(0),	YPL(3),	HPL(3),		STR_FREE,		STR_FREE},				//Park Entrance Fee Toggle	
 	{ WIDGETS_END },
 };
@@ -387,7 +387,7 @@ static void window_cheats_misc_mouseup()
 		window_invalidate_by_id(0x40 | WC_BOTTOM_TOOLBAR, 0);
 		break;
 	case WIDX_OPEN_CLOSE_PARK:
-		game_do_command(0, 1, 0, park_is_open() ? 0 : 0x101, 34, 0, 0);
+		game_do_command(0, 1, 0, park_is_open() ? 0 : 0x101, GAME_COMMAND_SET_PARK_OPEN, 0, 0);
 		window_invalidate_by_id(0x40 | WC_BOTTOM_TOOLBAR, 0);
 		break;
 	case WIDX_DECREASE_GAME_SPEED:
@@ -508,7 +508,7 @@ static void window_cheats_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *w)
 		sprite_idx = 5261;
 		if (w->page == WINDOW_CHEATS_PAGE_MONEY)
 			sprite_idx += (w->frame_no / 2) % 8;
-		gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_1].left, w->y + w->widgets[WIDX_TAB_1].top);	
+		gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_1].left, w->y + w->widgets[WIDX_TAB_1].top, 0);
 	}
 	
 	// Guests tab
@@ -516,13 +516,13 @@ static void window_cheats_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *w)
 		sprite_idx = 5568;
 		if (w->page == WINDOW_CHEATS_PAGE_GUESTS)
 			sprite_idx += (w->frame_no / 3) % 8;
-		gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_2].left, w->y + w->widgets[WIDX_TAB_2].top);
+		gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_2].left, w->y + w->widgets[WIDX_TAB_2].top, 0);
 	}
 
 	// Misc tab
 	if (!(w->disabled_widgets & (1 << WIDX_TAB_3))) {
 		sprite_idx = SPR_TAB_QUESTION;
-		gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_3].left, w->y + w->widgets[WIDX_TAB_3].top);
+		gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_3].left, w->y + w->widgets[WIDX_TAB_3].top, 0);
 	}
 }
 

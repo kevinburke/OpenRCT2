@@ -346,6 +346,7 @@ void tool_cancel();
 // Open window functions
 void window_main_open();
 void window_resize_gui(int width, int height);
+void window_resize_gui_scenario_editor(int width, int height);
 void window_game_top_toolbar_open();
 void window_game_bottom_toolbar_open();
 void window_about_open();
@@ -359,16 +360,19 @@ void window_scenarioselect_open();
 void window_clear_scenery_open();
 void window_land_open();
 void window_water_open();
+void window_staff_open();
 void window_guest_list_open();
 void window_map_open();
 void window_options_open();
 void window_peep_open(rct_peep* peep);
+void window_staff_peep_open(rct_peep* peep);
 void window_park_awards_open();
 void window_park_entrance_open();
 void window_park_guests_open();
 void window_park_objective_open();
 void window_park_rating_open();
 void window_finances_open();
+void window_new_campaign_open(int campaignType);
 void window_ride_list_open();
 void window_banner_open();
 void window_cheats_open();
@@ -382,5 +386,39 @@ void window_new_ride_init_vars();
 void window_staff_init_vars();
 
 void window_event_helper(rct_window* w, short widgetIndex, WINDOW_EVENTS event);
+
+#ifdef _MSC_VER
+	#define window_get_register(w)														\
+		__asm mov w, esi
+
+	#define window_mouse_up_get_registers(w, widgetIndex)								\
+		__asm mov widgetIndex, dx														\
+		__asm mov w, esi
+
+	#define window_dropdown_get_registers(w, widgetIndex, dropdownIndex)				\
+		__asm mov dropdownIndex, ax														\
+		__asm mov widgetIndex, dx														\
+		__asm mov w, esi
+
+	#define window_paint_get_registers(w, dpi)											\
+		__asm mov w, esi																\
+		__asm mov dpi, edi
+#else
+	#define window_get_register(w)														\
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+
+	#define window_mouse_up_get_registers(w, widgetIndex)								\
+		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+
+	#define window_dropdown_get_registers(w, widgetIndex, dropdownIndex)				\
+		__asm__ ( "mov %[dropdownIndex], ax " : [dropdownIndex] "+m" (dropdownIndex) );	\
+		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+
+	#define window_paint_get_registers(w, dpi)											\
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );									\
+		__asm__ ( "mov %[dpi], edi " : [dpi] "+m" (dpi) );
+#endif
 
 #endif
