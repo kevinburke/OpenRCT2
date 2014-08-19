@@ -375,6 +375,7 @@ void window_park_rating_open();
 void window_finances_open();
 void window_new_campaign_open(int campaignType);
 void window_ride_list_open();
+void window_new_ride_open();
 void window_banner_open();
 void window_cheats_open();
 void window_research_open();
@@ -393,12 +394,23 @@ void window_event_helper(rct_window* w, short widgetIndex, WINDOW_EVENTS event);
 	#define window_get_register(w)														\
 		__asm mov w, esi
 
-	#define window_mouse_up_get_registers(w, widgetIndex)								\
+	#define window_widget_get_registers(w, widgetIndex)									\
 		__asm mov widgetIndex, dx														\
 		__asm mov w, esi
 
 	#define window_dropdown_get_registers(w, widgetIndex, dropdownIndex)				\
 		__asm mov dropdownIndex, ax														\
+		__asm mov widgetIndex, dx														\
+		__asm mov w, esi
+
+	#define window_scrollmouse_get_registers(w, x, y)									\
+		__asm mov x, cx																	\
+		__asm mov y, dx																	\
+		__asm mov w, esi
+
+	#define window_tool_get_registers(w, widgetIndex, x, y)								\
+		__asm mov x, ax																	\
+		__asm mov y, bx																	\
 		__asm mov widgetIndex, dx														\
 		__asm mov w, esi
 
@@ -409,12 +421,23 @@ void window_event_helper(rct_window* w, short widgetIndex, WINDOW_EVENTS event);
 	#define window_get_register(w)														\
 		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
 
-	#define window_mouse_up_get_registers(w, widgetIndex)								\
+	#define window_widget_get_registers(w, widgetIndex)									\
 		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
 		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
 
 	#define window_dropdown_get_registers(w, widgetIndex, dropdownIndex)				\
 		__asm__ ( "mov %[dropdownIndex], ax " : [dropdownIndex] "+m" (dropdownIndex) );	\
+		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+
+	#define window_scrollmouse_get_registers(w, x, y)									\
+		__asm__ ( "mov %[x], cx " : [x] "+m" (x) );										\
+		__asm__ ( "mov %[y], dx " : [y] "+m" (y) );										\
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+
+	#define window_tool_get_registers(w, widgetIndex, x, y)								\
+		__asm__ ( "mov %[x], ax " : [x] "+m" (x) );										\
+		__asm__ ( "mov %[y], bx " : [y] "+m" (y) );										\
 		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
 		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
 
