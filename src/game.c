@@ -40,6 +40,7 @@
 #include "viewport.h"
 #include "widget.h"
 #include "window.h"
+#include "staff.h"
 #include "window_error.h"
 #include "window_tooltip.h"
 
@@ -918,20 +919,18 @@ static void game_handle_input_mouse(int x, int y, int state)
 					}
 				}
 				else if ((ebx & 0xFF) == 3){
-					//Don't think it is a map element.
-					rct_map_element_properties* map_element = (rct_map_element_properties*)spr;
-					uint32 edx = (uint32)spr;
-					
-					if (!((map_element->track.type & 0x3C) == 16)){
-						eax = RCT2_ADDRESS(0x0099BA64, uint8)[16 * (*(uint8*)(edx + 4))];
-						if (!(eax & 0x10)){
-							eax = *((uint8*)(edx + 7));
-							RCT2_CALLPROC_X(0x6ACC28, eax, ebx, ecx, edx, esi, edi, ebp);
+					rct_map_element* map_element = (rct_map_element*)spr;
+		
+					if (!((map_element->type & MAP_ELEMENT_TYPE_MASK) == MAP_ELEMENT_TYPE_ENTRANCE)){
+						eax = RCT2_ADDRESS(0x0099BA64, uint8)[16 * map_element->properties.track.type];
+						if (!(eax & 0x10)){//If not station track
+							//Open ride window in overview mode.
+							RCT2_CALLPROC_X(0x6ACC28, map_element->properties.track.ride_index, ebx, ecx, (int)map_element, esi, edi, ebp);
 							break;
 						}
 					}
-					//Open ride window
-					RCT2_CALLPROC_X(0x6ACCCE, *(uint8*)(edx + 7), ((*(uint8*)(edx + 5)) & 0x70) >> 4, ecx, edx, esi, edi, ebp);
+					//Open ride window in station view
+					RCT2_CALLPROC_X(0x6ACCCE, map_element->properties.track.ride_index, (map_element->properties.track.sequence & 0x70) >> 4, ecx, (int)map_element, esi, edi, ebp);
 				}
 				else if ((ebx & 0xFF) == 8){
 					window_park_entrance_open();
@@ -1845,34 +1844,74 @@ void handle_shortcut_command(int shortcutIndex)
 		RCT2_CALLPROC_EBPSAFE(0x006E4182);
 		break;
 	case SHORTCUT_UNDERGROUND_VIEW_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 0, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_UNDERGROUND_INSIDE;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_REMOVE_BASE_LAND_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 1, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_HIDE_BASE;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_REMOVE_VERTICAL_LAND_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 2, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_HIDE_VERTICAL;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_SEE_THROUGH_RIDES_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 4, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_SEETHROUGH_RIDES;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_SEE_THROUGH_SCENERY_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 5, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_SEETHROUGH_SCENERY;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_INVISIBLE_SUPPORTS_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 6, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_INVISIBLE_SUPPORTS;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_INVISIBLE_PEOPLE_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 7, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_INVISIBLE_PEEPS;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_HEIGHT_MARKS_ON_LAND_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 9, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_LAND_HEIGHTS;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_HEIGHT_MARKS_ON_RIDE_TRACKS_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 10, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_TRACK_HEIGHTS;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_HEIGHT_MARKS_ON_PATHS_TOGGLE:
-		RCT2_CALLPROC_X(0x0066CF8A, 11, 0, 0, 0, 0, 0, 0);
+		window = window_get_main();
+		if (window != NULL) {
+			window->viewport->flags ^= VIEWPORT_FLAG_PATH_HEIGHTS;
+			window_invalidate(window);
+		}
 		break;
 	case SHORTCUT_ADJUST_LAND:
 		if (!(RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 2) || RCT2_GLOBAL(0x0141F570, uint8) == 1) {
@@ -2150,6 +2189,7 @@ static int game_check_affordability(int cost)
 }
 
 static uint32 game_do_command_table[58];
+static GAME_COMMAND_POINTER* new_game_command_table[58];
 
 /**
  * 
@@ -2189,9 +2229,13 @@ int game_do_command_p(int command, int *eax, int *ebx, int *ecx, int *edx, int *
 	RCT2_GLOBAL(0x009A8C28, uint8)++;
 
 	*ebx &= ~1;
-
+	
 	// Primary command
-	RCT2_CALLFUNC_X(game_do_command_table[command], eax, ebx, ecx, edx, esi, edi, ebp);
+	if (game_do_command_table[command] == 0) {
+		new_game_command_table[command](eax, ebx, ecx, edx, esi, edi, ebp);
+	} else {
+		RCT2_CALLFUNC_X(game_do_command_table[command], eax, ebx, ecx, edx, esi, edi, ebp);
+	}
 	cost = *ebx;
 
 	if (cost != 0x80000000) {
@@ -2214,7 +2258,11 @@ int game_do_command_p(int command, int *eax, int *ebx, int *ecx, int *edx, int *
 			}
 
 			// Secondary command
-			RCT2_CALLFUNC_X(game_do_command_table[command], eax, ebx, ecx, edx, esi, edi, ebp);
+			if (game_do_command_table[command] == 0) {
+				new_game_command_table[command](eax, ebx, ecx, edx, esi, edi, ebp);
+			} else {
+				RCT2_CALLFUNC_X(game_do_command_table[command], eax, ebx, ecx, edx, esi, edi, ebp);
+			}
 			*edx = *ebx;
 
 			if (*edx != 0x80000000 && *edx < cost)
@@ -2335,54 +2383,6 @@ static void game_load_or_quit()
 	__asm__ ( "mov ebx, 0 "  );
 	#endif
 
-}
-
-/**
-*
-*  rct2: 0x00669E55
-*/
-static void game_update_staff_colour()
-{
-	byte tabIndex, colour, _bl;
-	int spriteIndex;
-	rct_peep *peep;
-	
-	#ifdef _MSC_VER
-	__asm mov _bl, bl
-	#else
-	__asm__("mov %[_bl], bl " : [_bl] "+m" (_bl));
-	#endif
-
-	#ifdef _MSC_VER
-	__asm mov tabIndex, bh
-	#else
-	__asm__("mov %[tabIndex], bh " : [tabIndex] "+m" (tabIndex));
-	#endif
-
-	#ifdef _MSC_VER
-	__asm mov colour, dh
-	#else
-	__asm__("mov %[colour], bh " : [colour] "+m" (colour));
-	#endif
-
-	if (_bl & 1) {
-		RCT2_ADDRESS(RCT2_ADDRESS_HANDYMAN_COLOUR, uint8)[tabIndex] = colour;
-
-		FOR_ALL_PEEPS(spriteIndex, peep) {
-			if (peep->type == PEEP_TYPE_STAFF && peep->staff_type == tabIndex) {
-				peep->tshirt_colour = colour;
-				peep->trousers_colour = colour;
-			}
-		}
-	}
-
-	gfx_invalidate_screen();
-	
-	#ifdef _MSC_VER
-	__asm mov ebx, 0
-	#else
-	__asm__("mov ebx, 0 ");
-	#endif
 }
 
 /**
@@ -2695,7 +2695,7 @@ static uint32 game_do_command_table[58] = {
 	0x006E66A0,
 	0x006E6878,
 	0x006C5AE9,
-	0x006BEFA1,
+	0, // use new_game_command_table, original: 0x006BEFA1, 29
 	0x006C09D1, // 30
 	0x006C0B83,
 	0x006C0BB5,
@@ -2706,7 +2706,7 @@ static uint32 game_do_command_table[58] = {
 	0x00666A63,
 	0x006CD8CE,
 	0x00669E30,
-	(uint32)game_update_staff_colour, // 40
+	(uint32)game_command_update_staff_colour, // 40
 	0x006E519A,
 	0x006E5597,
 	0x006B893C,
@@ -2724,6 +2724,69 @@ static uint32 game_do_command_table[58] = {
 	0x006BA16A,
 	0x006648E3,
 	0x0068DF91
+};
+
+void game_command_emptysub(int* eax, int* ebx, int* ecx, int* edx, int* esi, int* edi, int* ebp) {}
+
+static GAME_COMMAND_POINTER* new_game_command_table[58] = {
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub, // 10
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub, // 20
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_hire_new_staff_member, //game_command_emptysub,
+	game_command_emptysub, // 30
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub, // 40
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub, // 50
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub,
+	game_command_emptysub
 };
 
 #pragma endregion
