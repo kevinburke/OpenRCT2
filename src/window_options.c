@@ -230,6 +230,8 @@ void window_options_open()
 		(1ULL << WIDX_MUSIC_DROPDOWN) |
 		(1ULL << WIDX_SOUND_QUALITY) |
 		(1ULL << WIDX_SOUND_QUALITY_DROPDOWN) |
+		(1ULL << WIDX_LANGUAGE) |
+		(1ULL << WIDX_LANGUAGE_DROPDOWN) |
 		(1ULL << WIDX_CURRENCY) |
 		(1ULL << WIDX_CURRENCY_DROPDOWN) |
 		(1ULL << WIDX_DISTANCE) |
@@ -526,7 +528,7 @@ static void window_options_dropdown()
 	case WIDX_MUSIC_DROPDOWN:
 		RCT2_GLOBAL(RCT2_ADDRESS_CONFIG_MUSIC, uint8) = (uint8)dropdownIndex;
 		config_save();
-		RCT2_CALLPROC_EBPSAFE(0x006BCA9F);
+		stop_ride_music();//RCT2_CALLPROC_EBPSAFE(0x006BCA9F);
 		window_invalidate(w);
 		break;
 	case WIDX_SOUND_QUALITY_DROPDOWN:

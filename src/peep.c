@@ -330,7 +330,7 @@ void peep_update_crowd_noise()
 	if (visiblePeeps < 0) {
 		// Mute crowd noise
 		if (RCT2_GLOBAL(0x009AF5FC, uint32) != 1) {
-			RCT2_CALLPROC_1(0x00401A05, int, 2);
+			sound_channel_stop(2); //RCT2_CALLPROC_1(0x00401A05, int, 2);
 			RCT2_GLOBAL(0x009AF5FC, uint32) = 1;
 		}
 	} else {
@@ -345,14 +345,14 @@ void peep_update_crowd_noise()
 		// Check if crowd noise is already playing
 		if (RCT2_GLOBAL(0x009AF5FC, uint32) == 1) {
 			// Load and play crowd noise
-			if (RCT2_CALLFUNC_3(0x0040194E, int, int, char*, int, 2, (char*)get_file_path(PATH_ID_CSS2), 0)) {
-				RCT2_CALLPROC_5(0x00401999, int, int, int, int, int, 2, 1, volume, 0, 0);
+			if (sound_channel_load_file2(2, (char*)get_file_path(PATH_ID_CSS2), 0)) {
+				sound_channel_play(2, 1, volume, 0, 0);
 				RCT2_GLOBAL(0x009AF5FC, uint32) = volume;
 			}
 		} else {
 			// Alter crowd noise volume
 			if (RCT2_GLOBAL(0x009AF5FC, uint32) != volume) {
-				RCT2_CALLPROC_2(0x00401AD3, int, int, 2, volume);
+				sound_channel_set_volume(2, volume);//RCT2_CALLPROC_2(0x00401AD3, int, int, 2, volume);
 				RCT2_GLOBAL(0x009AF5FC, uint32) = volume;
 			}
 		}
@@ -540,6 +540,44 @@ void get_arguments_from_action(rct_peep* peep, uint32 *argument_1, uint32* argum
 		break;
 	}
 
+}
+
+/**
+* rct2: 0x00698342
+* thought.item (eax)
+* thought.type (ebx)
+* argument_1 (esi & ebx)
+* argument_2 (esi+2)
+*/
+void get_arguments_from_thought(rct_peep_thought thought, uint32* argument_1, uint32* argument_2){
+	int esi = 0x9AC86C;
+
+	if ((RCT2_ADDRESS(0x981DB1, uint16)[thought.type] & 0xFF) & 1){
+		rct_ride* ride = &g_ride_list[thought.item];
+		esi = (int)(&(ride->var_04A));
+	}
+	else if ((RCT2_ADDRESS(0x981DB1, uint16)[thought.type] & 0xFF) & 2){
+		if (thought.item < 0x20){
+			RCT2_GLOBAL(0x9AC86C, uint16) = thought.item + STR_ITEM_START;
+		}
+		else{
+			RCT2_GLOBAL(0x9AC86C, uint16) = thought.item + STR_ITEM2_START;
+		}
+	}
+	else if ((RCT2_ADDRESS(0x981DB1, uint16)[thought.type] & 0xFF) & 4){
+		if (thought.item < 0x20){
+			RCT2_GLOBAL(0x9AC86C, uint16) = thought.item + STR_ITEM_SINGULAR_START;
+		}
+		else
+		{
+			RCT2_GLOBAL(0x9AC86C, uint16) = thought.item + STR_ITEM2_SINGULAR_START;
+		}
+	}
+	else{
+		esi = 0x9AC864; //No thought?
+	}
+	*argument_1 = ((thought.type + STR_THOUGHT_START) & 0xFFFF) | (*((uint16*)esi) << 16);
+	*argument_2 = *((uint32*)(esi + 2)); //Always 0 apart from on rides?
 }
 
 /**
