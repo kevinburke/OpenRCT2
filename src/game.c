@@ -22,15 +22,16 @@
 #include "audio.h"
 #include "climate.h"
 #include "config.h"
-#include "rct2.h"
-#include "game.h"
 #include "finance.h"
+#include "game.h"
 #include "input.h"
 #include "news_item.h"
 #include "object.h"
 #include "osinterface.h"
 #include "park.h"
 #include "peep.h"
+#include "rct2.h"
+#include "ride.h"
 #include "sawyercoding.h"
 #include "scenario.h"
 #include "screenshot.h"
@@ -379,11 +380,11 @@ void game_logic_update()
 	RCT2_CALLPROC_EBPSAFE(0x00672AA4);	// update text effects
 	RCT2_CALLPROC_EBPSAFE(0x006ABE4C);	// update rides
 	park_update();
-	RCT2_CALLPROC_EBPSAFE(0x00684C7A);
-	RCT2_CALLPROC_EBPSAFE(0x006B5A2A);
-	RCT2_CALLPROC_EBPSAFE(0x006B6456);	// update ride measurements
+	RCT2_CALLPROC_EBPSAFE(0x00684C7A);	// update research
+	RCT2_CALLPROC_EBPSAFE(0x006B5A2A);	// update ride ratings
+	ride_measurements_update();
 	RCT2_CALLPROC_EBPSAFE(0x0068AFAD);
-	RCT2_CALLPROC_EBPSAFE(0x006BBC6B);	// vehicle and scream sounds
+	vehicle_sounds_update();//RCT2_CALLPROC_EBPSAFE(0x006BBC6B);	// vehicle and scream sounds
 	peep_update_crowd_noise();
 	climate_update_sound();
 	news_item_update_current();
@@ -515,7 +516,6 @@ int game_do_command_p(int command, int *eax, int *ebx, int *ecx, int *edx, int *
 			if (!(flags & 0x20)) {
 				// Update money balance
 				finance_payment(cost, RCT2_GLOBAL(0x0141F56C, uint8));
-				RCT2_CALLPROC_X(0x0069C674, 0, cost, 0, 0, 0, 0, 0);
 				if (RCT2_GLOBAL(0x0141F568, uint8) == RCT2_GLOBAL(0x013CA740, uint8)) {
 					// Create a +/- money text effect
 					if (cost != 0)
@@ -732,7 +732,12 @@ int game_load_save()
 		}
 	}
 
-	object_read_and_load_entries(file);
+	if (!object_read_and_load_entries(file)){
+		fclose(file);
+		RCT2_GLOBAL(0x009AC31B, uint8) = 255;
+		RCT2_GLOBAL(RCT2_ADDRESS_GAME_COMMAND_ERROR_STRING_ID, uint16) = STR_FILE_CONTAINS_INVALID_DATA;
+		return 0;
+	};
 
 	// Read flags (16 bytes)
 	sawyercoding_read_chunk(file, (uint8*)RCT2_ADDRESS_CURRENT_MONTH_YEAR);
@@ -926,7 +931,7 @@ static uint32 game_do_command_table[58] = {
 	0x006A67C0,
 	0x00663CCD, // 20
 	0x006B53E9,
-	0x00698D6C,
+	0x00698D6C, // text input
 	0x0068C542,
 	0x0068C6D1,
 	0x0068BC01,

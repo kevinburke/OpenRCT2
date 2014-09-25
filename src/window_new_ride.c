@@ -25,6 +25,7 @@
 #include "news_item.h"
 #include "ride.h"
 #include "string_ids.h"
+#include "scenery.h"
 #include "track.h"
 #include "widget.h"
 #include "window.h"
@@ -276,19 +277,6 @@ void window_new_ride_init_vars() {
 	}
 
 	RCT2_GLOBAL(RCT2_ADDRESS_WINDOW_RIDE_LIST_INFORMATION_TYPE, uint8) = 0;
-}
-
-uint8 *get_ride_entry_indices_for_ride_type(uint8 rideType)
-{
-	uint8 *typeToRideEntryIndexMap = (uint8*)0x009E32F8;
-	uint8 *entryIndexList = typeToRideEntryIndexMap;
-	while (rideType > 0) {
-		do {
-			entryIndexList++;
-		} while (*(entryIndexList - 1) != 255);
-		rideType--;
-	}
-	return entryIndexList;
 }
 
 /**
@@ -657,7 +645,7 @@ static void window_new_ride_scrollmousedown()
 	RCT2_ADDRESS(RCT2_ADDRESS_WINDOW_RIDE_LIST_HIGHLIGHTED_ITEM, ride_list_item)[_window_new_ride_current_tab] = item;
 	w->new_ride.selected_ride_id = *((sint16*)&item);
 
-	sound_play_panned(SOUND_CLICK_1, w->x + (w->width / 2));
+	sound_play_panned(SOUND_CLICK_1, w->x + (w->width / 2), 0, 0, 0);
 	w->new_ride.selected_ride_countdown = 8;
 	window_invalidate(w);
 }
@@ -761,8 +749,7 @@ static void window_new_ride_paint()
 					rideEntry->name :
 					(typeId & 0xFF00) + 2;
 			} else {
-				uint8 *sceneryEntry = RCT2_GLOBAL(0x009ADA90 + (typeId & 0xFFFF) * 4, uint8*);
-				stringId = RCT2_GLOBAL(sceneryEntry, uint16);
+				stringId = g_scenerySetEntries[typeId]->name;
 			}
 		}
 	}
@@ -798,8 +785,7 @@ static void window_new_ride_paint()
 				rideEntry->name :
 				(typeId & 0xFF00) + 2;
 		} else {
-			uint8 *sceneryEntry = RCT2_GLOBAL(0x009ADA90 + (typeId & 0xFFFF) * 4, uint8*);
-			stringId = RCT2_GLOBAL(sceneryEntry, uint16);
+			stringId = g_scenerySetEntries[typeId]->name;
 		}
 		gfx_draw_string_left_wrapped(dpi, &stringId, x, y, 266, STR_RESEARCH_RIDE_LABEL, 0);
 	}
@@ -871,7 +857,7 @@ static ride_list_item window_new_ride_scroll_get_ride_list_item_at(rct_window *w
 
 	int column = x / 116;
 	int row = y / 116;
-	if (row >= 5)
+	if (column >= 5)
 		return result;
 
 	int index = column + (row * 5);
@@ -989,5 +975,6 @@ static void window_new_ride_select(rct_window *w)
 	}
 
 	// Show ride construction window
-	RCT2_CALLPROC_X(0x006B4800, *((sint16*)&item), 0, 0, 0, 0, 0, 0);
+	//RCT2_CALLPROC_X(0x006B4800, *((sint16*)&item), 0, 0, 0, 0, 0, 0);
+	ride_construct_new(*((sint16*)&item));
 }

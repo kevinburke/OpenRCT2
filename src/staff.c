@@ -99,7 +99,7 @@ void game_command_hire_new_staff_member(int* eax, int* ebx, int* ecx, int* edx,
 
 	int i;
 	for (i = 0; i < STAFF_MAX_COUNT; i++) {
-		if (!(RCT2_ADDRESS(0x013CA672, uint8)[i] & 1))
+		if (!(RCT2_ADDRESS(RCT2_ADDRESS_STAFF_MODE_ARRAY, uint8)[i] & 1))
 			break;
 	}
 
@@ -111,14 +111,12 @@ void game_command_hire_new_staff_member(int* eax, int* ebx, int* ecx, int* edx,
 
 	int newStaffId = i;
 
-	int _eax, _ebx, _ecx = _cx, _edx, _esi, _edi, _ebp;
-	_esi = 0;
+	int _eax, _ebx, _ecx = _cx, _edx;
 	_ebx = _bl;
-	RCT2_CALLFUNC_X(0x0069EC6B, &_eax, &_ebx, &_ecx, &_edx, &_esi, &_edi, &_ebp);
-	rct_peep* newPeep = (rct_peep*)_esi;
 
-	//if ((newPeep = create_peep_sprite(_bl)) == NULL)
-	if (_esi == 0)
+	rct_peep* newPeep = &(create_sprite(_bl)->peep);
+
+	if (newPeep == NULL)
 	{
 		*ebx = 0x80000000;
 		RCT2_GLOBAL(RCT2_ADDRESS_GAME_COMMAND_ERROR_TEXT, uint16) = STR_TOO_MANY_PEOPLE_IN_GAME;
@@ -129,7 +127,7 @@ void game_command_hire_new_staff_member(int* eax, int* ebx, int* ecx, int* edx,
 		RCT2_CALLPROC_X(0x0069EDB6, 0, 0, _ecx, 0, (int)newPeep, 0, 0);
 	}
 	else {
-		RCT2_CALLPROC_X(0x0069ED0B, 0, 0, 4, 0, (int)newPeep, 0, 0);
+		move_sprite_to_list((rct_sprite *)newPeep, SPRITE_LINKEDLIST_OFFSET_PEEP);
 
 		newPeep->sprite_identifier = 1;
 		newPeep->var_09 = 0x0F;
@@ -222,9 +220,9 @@ void game_command_hire_new_staff_member(int* eax, int* ebx, int* ecx, int* edx,
 		RCT2_CALLPROC_X(0x00699115, (uint32)ebp & 0xFFFFFF3F, 0, 0, 0, (int)newPeep, 0,
 			(*ebp << 25) | (*ebp >> 6));
 
-		newPeep->var_C5 = newStaffId;
+		newPeep->staff_id = newStaffId;
 
-		RCT2_ADDRESS(0x013CA672, uint8)[newStaffId] = 1;
+		RCT2_ADDRESS(RCT2_ADDRESS_STAFF_MODE_ARRAY, uint8)[newStaffId] = STAFF_MODE_WALK;
 
 		for (int edi = 0; edi < 0x80; edi++) {
 			int addr = 0x013B0E72 + (newStaffId << 9) + edi * 4;
@@ -269,4 +267,27 @@ uint16 hire_new_staff_member(uint8 staff_type)
 		return 0xFFFF;
 
 	return edi;
+}
+
+void sub_6C0C3F()
+{
+	register rct_peep* peep;
+
+	for (register uint8 staff_type = 0; staff_type < STAFF_TYPE_COUNT; ++staff_type)
+	{
+		for (register uint8 i = 0; i < 128; ++i)
+			RCT2_ADDRESS(0x13B0E72 + (staff_type + STAFF_MAX_COUNT) * 512, uint32)[i] = 0;
+		
+		for (register uint16 sprite_index = RCT2_GLOBAL(RCT2_ADDRESS_SPRITES_START_PEEP, uint16); sprite_index != SPRITE_INDEX_NULL; sprite_index = peep->next)
+		{
+			peep = GET_PEEP(sprite_index);
+
+			if (peep->type == PEEP_TYPE_STAFF && staff_type == peep->staff_type)
+			{
+				for (register uint8 i = 0; i < 128; ++i)
+					RCT2_ADDRESS(0x13B0E72 + (staff_type + STAFF_MAX_COUNT) * 512, uint32)[i] |= RCT2_ADDRESS(0x13B0E72 + (peep->staff_id * 512) * 512, uint32)[i];
+
+			}
+		}
+	}
 }

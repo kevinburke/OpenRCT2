@@ -104,7 +104,7 @@ typedef struct{
 	sint16 y; //0x484 & VIEWPORT_FOCUS_Y_MASK
 	sint16 z; //0x486
 	uint8 rotation;//0x488
-	uint8 pad_489;
+	uint8 zoom;//0x489
 } coordinate_focus;
 
 // Type is viewport_target_sprite_id & 0x80000000 != 0
@@ -115,7 +115,7 @@ typedef struct{
 	uint8 type; //0x485 & VIEWPORT_FOCUS_TYPE_MASK
 	uint16 pad_486; 
 	uint8 rotation; //0x488
-	uint8 pad_489;
+	uint8 zoom; //0x489
 } sprite_focus;
 
 #define VIEWPORT_FOCUS_TYPE_MASK 0xC0
@@ -123,7 +123,7 @@ enum{
 	VIEWPORT_FOCUS_TYPE_COORDINATE = (1<<6),
 	VIEWPORT_FOCUS_TYPE_SPRITE = (1<<7)
 };
-#define VIEWPORT_FOCUS_Y_MASK 0x3FFF;
+#define VIEWPORT_FOCUS_Y_MASK 0x3FFF
 
 
 typedef struct{
@@ -158,9 +158,15 @@ typedef struct{
 } map_variables;
 
 typedef struct {
-	sint16 var_480;
+	sint16 view;
 	sint32 var_482;
+	sint32 var_486;
 } ride_variables;
+
+typedef struct {
+	sint16 selected_scenery_id;
+	sint16 hover_counter;
+} scenery_variables;
 
 /**
  * Window structure
@@ -199,6 +205,7 @@ typedef struct rct_window {
 		news_variables news;
 		map_variables map;
 		ride_variables ride;
+		scenery_variables scenery;
 	};
 	sint16 page;					// 0x48A
 	sint16 var_48C;
@@ -228,7 +235,12 @@ typedef enum {
 	WE_RESIZE = 2,
 	WE_MOUSE_DOWN = 3,
 	WE_DROPDOWN = 4,
-	WE_UNKNOWN_05 = 5,
+	WE_UNKNOWN_05 = 5, 
+	// Unknown 05: Used to update tabs that are not being animated
+	// see window_peep. When the overview tab is not highlighted the
+	// items being carried such as hats/balloons still need to be shown
+	// and removed. Probably called after anything that affects items
+	// being carried.
 	WE_UPDATE = 6,
 	WE_UNKNOWN_07 = 7,
 	WE_UNKNOWN_08 = 8,
@@ -324,14 +336,15 @@ enum {
 	WC_TOOLTIP = 5,
 	WC_DROPDOWN = 6,
 	WC_ABOUT = 8,
-	WC_MUSIC_CREDITS = 9,
-	WC_PUBLISHER_CREDITS = 10,
+	WC_PUBLISHER_CREDITS = 9,
+	WC_MUSIC_CREDITS = 10,
 	WC_ERROR = 11,
 	WC_RIDE = 12,
 	WC_RIDE_CONSTRUCTION = 13,
 	WC_SAVE_PROMPT = 14,
 	WC_RIDE_LIST = 15,
 	WC_CONSTRUCT_RIDE = 16,
+	WC_DEMOLISH_RIDE_PROMPT = 17,
 	WC_SCENERY = 18,
 	WC_OPTIONS = 19,
 	WC_FOOTPATH = 20,
@@ -457,6 +470,8 @@ void window_new_ride_open();
 void window_banner_open();
 void window_cheats_open();
 void window_research_open();
+void window_scenery_open();
+void window_music_credits_open();
 
 void window_guest_list_init_vars_a();
 void window_guest_list_init_vars_b();
@@ -483,6 +498,12 @@ void RCT2_CALLPROC_WE_MOUSE_DOWN(int address, int widgetIndex, rct_window*w, rct
 		__asm mov dropdownIndex, ax														\
 		__asm mov widgetIndex, dx														\
 		__asm mov w, esi
+	
+	#define window_text_input_get_registers(w, widgetIndex, _cl, text)					\
+		__asm mov widgetIndex, dx														\
+		__asm mov _cl, cl																\
+		__asm mov w, esi																\
+		__asm mov text, edi
 
 	#define window_scrollmouse_get_registers(w, x, y)									\
 		__asm mov x, cx																	\
@@ -495,36 +516,54 @@ void RCT2_CALLPROC_WE_MOUSE_DOWN(int address, int widgetIndex, rct_window*w, rct
 		__asm mov widgetIndex, dx														\
 		__asm mov w, esi
 
+	#define window_textinput_get_registers(w, widgetIndex, result, text)				\
+		__asm mov result, cl															\
+		__asm mov widgetIndex, dx														\
+		__asm mov w, esi																\
+		__asm mov text, edi
+
 	#define window_paint_get_registers(w, dpi)											\
 		__asm mov w, esi																\
 		__asm mov dpi, edi
 #else
 	#define window_get_register(w)														\
-		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+		__asm__ ( "mov %["#w"], esi " : [w] "+m" (w) );
 
 	#define window_widget_get_registers(w, widgetIndex)									\
-		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
-		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+		__asm__ ( "mov %["#widgetIndex"], dx " : [widgetIndex] "+m" (widgetIndex) );	\
+		__asm__ ( "mov %["#w"], esi " : [w] "+m" (w) );
 
 	#define window_dropdown_get_registers(w, widgetIndex, dropdownIndex)				\
-		__asm__ ( "mov %[dropdownIndex], ax " : [dropdownIndex] "+m" (dropdownIndex) );	\
+		__asm__ ( "mov %["#dropdownIndex"], ax " : [dropdownIndex] "+m" (dropdownIndex) );	\
+		__asm__ ( "mov %["#widgetIndex"], dx " : [widgetIndex] "+m" (widgetIndex) );		\
+		__asm__ ( "mov %["#w"], esi " : [w] "+m" (w) );
+
+	#define window_text_input_get_registers(w, widgetIndex, _cl, text)					\
+		__asm__ ( "mov %[_cl], cl " : [_cl] "+m" (_cl) );								\
 		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
-		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );									\
+		__asm__ ( "mov %[text], edi " : [text] "+m" (text) );
 
 	#define window_scrollmouse_get_registers(w, x, y)									\
-		__asm__ ( "mov %[x], cx " : [x] "+m" (x) );										\
-		__asm__ ( "mov %[y], dx " : [y] "+m" (y) );										\
-		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+		__asm__ ( "mov %["#x"], cx " : [x] "+m" (x) );										\
+		__asm__ ( "mov %["#y"], dx " : [y] "+m" (y) );										\
+		__asm__ ( "mov %["#w"], esi " : [w] "+m" (w) );
 
 	#define window_tool_get_registers(w, widgetIndex, x, y)								\
-		__asm__ ( "mov %[x], ax " : [x] "+m" (x) );										\
-		__asm__ ( "mov %[y], bx " : [y] "+m" (y) );										\
+		__asm__ ( "mov %["#x"], ax " : [x] "+m" (x) );										\
+		__asm__ ( "mov %["#y"], bx " : [y] "+m" (y) );										\
+		__asm__ ( "mov %["#widgetIndex"], dx " : [widgetIndex] "+m" (widgetIndex) );		\
+		__asm__ ( "mov %["#w"], esi " : [w] "+m" (w) );
+
+	#define window_textinput_get_registers(w, widgetIndex, result, text)				\
+		__asm__ ( "mov %[result], cl " : [result] "+m" (result) );						\
 		__asm__ ( "mov %[widgetIndex], dx " : [widgetIndex] "+m" (widgetIndex) );		\
-		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );
+		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );									\
+		__asm__ ( "mov %[text], edi " : [text] "+m" (text) );
 
 	#define window_paint_get_registers(w, dpi)											\
-		__asm__ ( "mov %[w], esi " : [w] "+m" (w) );									\
-		__asm__ ( "mov %[dpi], edi " : [dpi] "+m" (dpi) );
+		__asm__ ( "mov %["#w"], esi " : [w] "+m" (w) );									\
+		__asm__ ( "mov %["#dpi"], edi " : [dpi] "+m" (dpi) );
 #endif
 
 #endif

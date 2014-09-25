@@ -434,52 +434,6 @@ static void window_ride_list_paint()
 
 /**
  * 
- *  rct2: 0x006AF561
- */
-static void ride_get_status(int rideIndex, int *formatSecondary, int *argument)
-{
-	rct_ride *ride = &g_ride_list[rideIndex];
-
-	if (ride->lifecycle_flags & RIDE_LIFECYCLE_CRASHED) {
-		*formatSecondary = STR_CRASHED;
-		return;
-	}
-	if (ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN) {
-		*formatSecondary = STR_BROKEN_DOWN;
-		return;
-	}
-	if (ride->status == RIDE_STATUS_CLOSED) {
-		*formatSecondary = STR_CLOSED;
-		return;
-	}
-	if (ride->status == RIDE_STATUS_TESTING) {
-		*formatSecondary = STR_TEST_RUN;
-		return;
-	}
-	rct_peep *peep = GET_PEEP(ride->race_winner);
-	if (ride->mode == RIDE_MODE_RACE && !(ride->lifecycle_flags & RIDE_LIFECYCLE_PASS_STATION_NO_STOPPING) && ride->race_winner != 0xFFFF && peep->sprite_identifier == SPRITE_IDENTIFIER_PEEP) {
-		if (peep->name_string_idx == STR_GUEST) {
-			*argument = peep->id;
-			*formatSecondary = STR_RACE_WON_BY_GUEST;
-		} else {
-			*argument = peep->name_string_idx;
-			*formatSecondary = STR_RACE_WON_BY;
-		}
-	} else {
-		if (!(RCT2_GLOBAL(RCT2_ADDRESS_RIDE_FLAGS + ride->type * 8, uint32) & 0x20000)) {
-			*argument = ride->num_riders;
-			*formatSecondary = STR_PERSON_ON_RIDE;
-			if(*argument != 1)
-				*formatSecondary = STR_PEOPLE_ON_RIDE;
-
-		} else {
-			*formatSecondary = STR_OPEN;
-		}
-	}
-}
-
-/**
- * 
  *  rct2: 0x006B3240
  */
 static void window_ride_list_scrollpaint()
@@ -507,7 +461,7 @@ static void window_ride_list_scrollpaint()
 		ride = &g_ride_list[w->list_item_positions[i]];
 
 		// Ride name
-		gfx_draw_string_left_clipped(dpi, format, &ride->var_04A, 0, 0, y - 1, 159);
+		gfx_draw_string_left_clipped(dpi, format, &ride->name, 0, 0, y - 1, 159);
 
 		// Ride information
 		formatSecondary = 0;
@@ -648,12 +602,12 @@ static void window_ride_list_refresh_list(rct_window *w)
 		int current_list_position = list_index;
 		switch (w->list_information_type) {
 		case INFORMATION_TYPE_STATUS:
-			RCT2_GLOBAL(0x013CE952, uint32) = ride->var_04C;
-			RCT2_CALLPROC_X(0x006C2538, ride->var_04A, 0, 0x013CE952, 0, 0, RCT2_ADDRESS_COMMON_STRING_FORMAT_BUFFER, 0);
+			RCT2_GLOBAL(0x013CE952, uint32) = ride->name_arguments;
+			RCT2_CALLPROC_X(0x006C2538, ride->name, 0, 0x013CE952, 0, 0, RCT2_ADDRESS_COMMON_STRING_FORMAT_BUFFER, 0);
 			while (--current_list_position >= 0) {
 				otherRide = &g_ride_list[w->list_item_positions[current_list_position]];
-				RCT2_GLOBAL(0x013CE952, uint32) = otherRide->var_04C;
-				RCT2_CALLPROC_X(0x006C2538, otherRide->var_04A, 0, 0x013CE952, 0, 0, 0x0141EF68, 0);
+				RCT2_GLOBAL(0x013CE952, uint32) = otherRide->name_arguments;
+				RCT2_CALLPROC_X(0x006C2538, otherRide->name, 0, 0x013CE952, 0, 0, 0x0141EF68, 0);
 				if (strcmp((char*)RCT2_ADDRESS_COMMON_STRING_FORMAT_BUFFER, (char*)0x0141EF68) >= 0)
 					break;
 

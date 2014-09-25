@@ -28,11 +28,13 @@
     <ClInclude Include="..\src\game.h" />
     <ClInclude Include="..\src\gfx.h" />
     <ClInclude Include="..\src\graph.h" />
+    <ClInclude Include="..\src\hook.h" />
     <ClInclude Include="..\src\input.h" />
     <ClInclude Include="..\src\intro.h" />
     <ClInclude Include="..\src\language.h" />
     <ClInclude Include="..\src\map.h" />
     <ClInclude Include="..\src\marketing.h" />
+    <ClInclude Include="..\src\mixer.h" />
     <ClInclude Include="..\src\news_item.h" />
     <ClInclude Include="..\src\object.h" />
     <ClInclude Include="..\src\osinterface.h" />
@@ -44,6 +46,7 @@
     <ClInclude Include="..\src\ride_ratings.h" />
     <ClInclude Include="..\src\sawyercoding.h" />
     <ClInclude Include="..\src\scenario.h" />
+    <ClInclude Include="..\src\scenery.h" />
     <ClInclude Include="..\src\screenshot.h" />
     <ClInclude Include="..\src\sprite.h" />
     <ClInclude Include="..\src\sprites.h" />
@@ -58,11 +61,13 @@
     <ClInclude Include="..\src\window.h" />
     <ClInclude Include="..\src\window_dropdown.h" />
     <ClInclude Include="..\src\window_error.h" />
+    <ClInclude Include="..\src\window_scenery.h" />
     <ClInclude Include="..\src\window_tooltip.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\src\staff.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\libspeex\resample.c" />
     <ClCompile Include="..\lodepng\lodepng.c" />
     <ClCompile Include="..\src\audio.c" />
     <ClCompile Include="..\src\award.c" />
@@ -75,11 +80,13 @@
     <ClCompile Include="..\src\game.c" />
     <ClCompile Include="..\src\gfx.c" />
     <ClCompile Include="..\src\graph.c" />
+    <ClCompile Include="..\src\hook.c" />
     <ClCompile Include="..\src\input.c" />
     <ClCompile Include="..\src\intro.c" />
     <ClCompile Include="..\src\language.c" />
     <ClCompile Include="..\src\map.c" />
     <ClCompile Include="..\src\marketing.c" />
+    <ClCompile Include="..\src\mixer.cpp" />
     <ClCompile Include="..\src\news_item.c" />
     <ClCompile Include="..\src\object.c" />
     <ClCompile Include="..\src\object_list.c" />
@@ -137,6 +144,8 @@
     <ClCompile Include="..\src\window_tooltip.c" />
     <ClCompile Include="..\src\window_water.c" />
     <ClCompile Include="..\src\staff.c" />
+    <ClCompile Include="..\src\window_scenery.c" />
+    <ClCompile Include="..\src\window_credits.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\openrct2.exe" />
@@ -149,6 +158,7 @@
     <Text Include="..\data\language\hungarian.txt" />
     <Text Include="..\data\language\polish.txt" />
     <Text Include="..\data\language\spanish_sp.txt" />
+    <Text Include="..\data\language\swedish.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D24D94F6-2A74-480C-B512-629C306CE92F}</ProjectGuid>
@@ -180,13 +190,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)..\lodepng;$(SolutionDir)..\sdl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\lodepng;$(SolutionDir)..\sdl\include;$(SolutionDir)..\libspeex;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\sdl\lib\x86;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\obj\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)..\lodepng;$(SolutionDir)..\sdl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\lodepng;$(SolutionDir)..\sdl\include;$(SolutionDir)..\libspeex;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\sdl\lib\x86;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\obj\$(Configuration)\</IntDir>
@@ -197,7 +207,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <StructMemberAlignment>1Byte</StructMemberAlignment>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HAVE_CONFIG_H;_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -218,7 +228,7 @@
       <OmitFramePointers>
       </OmitFramePointers>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HAVE_CONFIG_H;_USE_MATH_DEFINES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

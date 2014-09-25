@@ -32,7 +32,8 @@ const char *language_names[LANGUAGE_COUNT] = {
 	"Fran\u00E7ais",	// LANGUAGE_FRENCH
 	"Magyar",			// LANGUAGE_HUNGARIAN
 	"Polski",			// LANGUAGE_POLISH
-	"Espa\u00F1ol"		// LANGUAGE_SPANISH
+	"Espa\u00F1ol",		// LANGUAGE_SPANISH
+	"Svenska"			// LANGUAGE_SWEDISH
 };
 
 const char *language_filenames[LANGUAGE_COUNT] = {
@@ -43,7 +44,8 @@ const char *language_filenames[LANGUAGE_COUNT] = {
 	"french",			// LANGUAGE_FRENCH
 	"hungarian",		// LANGUAGE_HUNGARIAN
 	"polish",			// LANGUAGE_POLISH
-	"spanish_sp"		// LANGUAGE_SPANISH
+	"spanish_sp",		// LANGUAGE_SPANISH
+	"swedish"			// LANGUAGE_SWEDISH
 };
 
 int gCurrentLanguage = LANGUAGE_UNDEFINED;
@@ -132,7 +134,8 @@ static int language_open_file(const char *filename)
 
 	language_strings = calloc(STR_COUNT, sizeof(char*));
 
-	char *dst, *token;
+	char *dst = NULL;
+	char *token = NULL;
 	char tokenBuffer[64];
 	int i, stringIndex = 0, mode = 0, string_no;
 	for (i = 0; i < language_buffer_size; i++) {

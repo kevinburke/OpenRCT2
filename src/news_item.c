@@ -97,7 +97,7 @@ void news_item_update_current()
 	newsItems[0].ticks++;
 	if (newsItems[0].ticks == 1 && !(RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & 1)) {
 		// Play sound
-		sound_play_panned(SOUND_NEWS_ITEM, RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_WIDTH, sint16) / 2);
+		sound_play_panned(SOUND_NEWS_ITEM, RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_WIDTH, sint16) / 2, 0, 0, 0);
 	}
 
 	// Removal of current news item
@@ -212,7 +212,7 @@ void news_item_get_subject_location(int type, int subject, int *x, int *y, int *
 		}
 
 		// Find the first car of the train peep is on
-		vehicle = &(g_sprite_list[ride->train_car_map[peep->current_train]]).vehicle;
+		vehicle = &(g_sprite_list[ride->vehicles[peep->current_train]]).vehicle;
 		// Find the actual car peep is on
 		for (i = 0; i < peep->current_car; i++)
 			vehicle = &(g_sprite_list[vehicle->next_vehicle_on_train]).vehicle;
@@ -252,7 +252,7 @@ void news_item_add_to_queue(uint8 type, rct_string_id string_id, uint32 assoc)
 
 	// find first open slot
 	while (newsItem->type != NEWS_ITEM_NULL) {
-		if (newsItem + sizeof(newsItem) >= (rct_news_item*)0x13CB1CC)
+		if (newsItem + 1 >= (rct_news_item*)0x13CB1CC)
 			news_item_close_current();
 		else
 			newsItem++;
@@ -291,7 +291,7 @@ void news_item_open_subject(int type, int subject) {
 
 	switch (type) {
 	case NEWS_ITEM_RIDE:
-		RCT2_CALLPROC_X(0x006ACC28, subject, 0, 0, 0, 0, 0, 0);
+		window_ride_main_open(subject);
 		break;
 	case NEWS_ITEM_PEEP_ON_RIDE:
 	case NEWS_ITEM_PEEP:

@@ -395,7 +395,7 @@ static int park_calculate_guest_generation_probability()
 				continue;
 			if (!(ride->lifecycle_flags & RIDE_LIFECYCLE_TESTED))
 				continue;
-			if (ride->var_0E4 < 0x2580000)
+			if (ride->length[0] < (600 << 16))
 				continue;
 			if (ride->excitement < RIDE_RATING(6,00))
 				continue;
@@ -467,7 +467,7 @@ static void get_random_peep_spawn(rct2_peep_spawn *spawn)
 
 static rct_peep *park_generate_new_guest()
 {
-	rct_peep *peep;
+	rct_peep *peep = NULL;
 	rct2_peep_spawn spawn;
 	get_random_peep_spawn(&spawn);
 

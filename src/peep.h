@@ -296,10 +296,10 @@ enum PEEP_ITEM {
 };
 
 typedef struct {
-	uint8 type;
-	uint8 item;
-	uint8 var_2;
-	uint8 var_3;
+	uint8 type;		//0
+	uint8 item;		//1
+	uint8 var_2;	//2
+	uint8 var_3;	//3
 } rct_peep_thought;
 
 typedef struct {
@@ -308,7 +308,7 @@ typedef struct {
 	uint16 var_02;					// 0x02
 	uint16 next;					// 0x04
 	uint16 previous;				// 0x06
-	uint8 var_08;
+	uint8 linked_list_type_offset;	// 0x08 Valid values are SPRITE_LINKEDLIST_OFFSET_...
 	uint8 var_09;					// 0x09
 	uint16 sprite_index;			// 0x0A
 	uint16 var_0C;
@@ -332,7 +332,10 @@ typedef struct {
 	uint8 pad_2C;
 	uint8 sprite_type;				// 0x2D
 	uint8 type;						// 0x2E
-	uint8 staff_type;				// 0x2F
+	union{							// 0x2F
+		uint8 staff_type;
+		uint8 no_of_rides;
+	};
 	uint8 tshirt_colour;			// 0x30
 	uint8 trousers_colour;			// 0x31
 	uint16 var_32;
@@ -342,7 +345,7 @@ typedef struct {
 	uint8 energy;					// 0x38
 	uint8 energy_growth_rate;		// 0x39
 	uint8 happiness;				// 0x3A
-	uint8 happiness_growth_rate;	// 0x3B
+	sint8 happiness_growth_rate;	// 0x3B
 	uint8 nausea;					// 0x3C
 	uint8 nausea_growth_rate;		// 0x3D
 	uint8 hunger;					// 0x3E
@@ -351,7 +354,7 @@ typedef struct {
 	uint8 pad_41[0x2];
 	uint8 intensity;				// 0x43
 	uint8 nausea_tolerance;			// 0x44
-	uint8 var_45;
+	uint8 var_45;					//		Some sort of flags?
 	money16 paid_on_drink;			// 0x46
 	uint8 pad_48[0x10];
 	uint32 item_extra_flags;		// 0x58
@@ -376,17 +379,23 @@ typedef struct {
 	uint8 pad_77;
 	uint8 var_78;
 	uint8 pad_79[0x03];
-	uint8 rides_been_on[32];		// 0x7C
+	uint8 rides_been_on[32];		// 0x7C 
+	// 255 bit bitmap of every ride the peep has been on see
+	// window_peep_rides_update for how to use.
 	uint32 id;						// 0x9C
 	money32 cash_in_pocket;			// 0xA0
 	money32 cash_spent;				// 0xA4
-	uint8 var_A8;					// 0xA8
-	sint32 time_in_park;			// 0xA9
+	sint32 time_in_park;			// 0xA8
+	uint8 var_AC;					// 0xAC
 	uint8 var_AD;					// creation/hire time?
 	uint16 var_AE;
 	rct_peep_thought thoughts[PEEP_MAX_THOUGHTS];	// 0xB0
 	uint8 var_C4;					// 0xC4
-	uint8 var_C5;
+	union							// 0xC5
+	{
+		uint8 staff_id;
+		uint8 guest_heading_to_ride_id;
+	};
 	uint8 var_C6;
 	uint8 photo1_ride_ref;			// 0xC7
 	uint32 flags;					// 0xC8
@@ -404,8 +413,8 @@ typedef struct {
 	uint8 no_of_drinks;				// 0xED
 	uint8 no_of_souvenirs;			// 0xEE
 	uint8 pad_EF;
-	uint8 var_F0;
-	uint8 var_F1;
+	uint8 voucher_type;				// 0xF0
+	uint8 voucher_arguments;		// 0xF1 ride_id or string_offset_id
 	uint8 pad_F2;
 	uint8 var_F3;
 	uint8 pad_F4[0x02];
@@ -416,6 +425,35 @@ typedef struct {
 	uint16 pad_FA;
 	uint32 item_standard_flags;		// 0xFC
 } rct_peep;
+
+enum {
+	EASTEREGG_PEEP_NAME_MICHAEL_SCHUMACHER,
+	EASTEREGG_PEEP_NAME_JACQUES_VILLENEUVE,
+	EASTEREGG_PEEP_NAME_DAMON_HILL,
+	EASTEREGG_PEEP_NAME_MR_BEAN,
+	EASTEREGG_PEEP_NAME_CHRIS_SAWYER,
+	EASTEREGG_PEEP_NAME_KATIE_BRAYSHAW,
+	EASTEREGG_PEEP_NAME_MELANIE_WARN,
+	EASTEREGG_PEEP_NAME_SIMON_FOSTER,
+	EASTEREGG_PEEP_NAME_JOHN_WARDLEY,
+	EASTEREGG_PEEP_NAME_LISA_STIRLING,
+	EASTEREGG_PEEP_NAME_DONALD_MACRAE,
+	EASTEREGG_PEEP_NAME_KATHERINE_MCGOWAN,
+	EASTEREGG_PEEP_NAME_FRANCES_MCGOWAN,
+	EASTEREGG_PEEP_NAME_CORINA_MASSOURA,
+	EASTEREGG_PEEP_NAME_CAROL_YOUNG,
+	EASTEREGG_PEEP_NAME_MIA_SHERIDAN,
+	EASTEREGG_PEEP_NAME_KATIE_RODGER,
+	EASTEREGG_PEEP_NAME_EMMA_GARRELL,
+	EASTEREGG_PEEP_NAME_JOANNE_BARTON,
+	EASTEREGG_PEEP_NAME_FELICITY_ANDERSON,
+	EASTEREGG_PEEP_NAME_KATIE_SMITH,
+	EASTEREGG_PEEP_NAME_EILIDH_BELL,
+	EASTEREGG_PEEP_NAME_NANCY_STILLWAGON,
+	EASTEREGG_PEEP_NAME_ANDY_HINE,
+	EASTEREGG_PEEP_NAME_ELISSA_WHITE,
+	EASTEREGG_PEEP_NAME_DAVID_ELLIS
+};
 
 /** Helper macro until rides are stored in this module. */
 #define GET_PEEP(sprite_index) &(g_sprite_list[sprite_index].peep)
@@ -445,5 +483,10 @@ void peep_applause();
 rct_peep *peep_generate(int x, int y, int z);
 void get_arguments_from_action(rct_peep* peep, uint32 *argument_1, uint32* argument_2);
 void get_arguments_from_thought(rct_peep_thought thought, uint32* argument_1, uint32* argument_2);
+int get_peep_face_sprite_small(rct_peep *peep);
+int get_peep_face_sprite_large(rct_peep *peep);
+int peep_check_easteregg_name(int index, rct_peep *peep);
+int peep_get_easteregg_name_id(rct_peep *peep);
+int peep_is_mechanic(rct_peep *peep);
 
 #endif

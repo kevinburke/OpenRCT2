@@ -41,6 +41,8 @@
 #define RCT2_CALLPROC_4(address, a1, a2, a3, a4, v1, v2, v3, v4)			RCT2_CALLFUNC_4(address, void, a1, a2, a3, a4, v1, v2, v3, v4)
 #define RCT2_CALLPROC_5(address, a1, a2, a3, a4, a5, v1, v2, v3, v4, v5)	RCT2_CALLFUNC_5(address, void, a1, a2, a3, a4, a5, v1, v2, v3, v4, v5)
 
+#define RCT2_ADDRESS_EASTEREGG_NAMES				0x00988C20
+
 #define RCT2_ADDRESS_RIDE_PROPERTIES				0x00997C9D
 #define RCT2_ADDRESS_LAND_TOOL_SIZE					0x009A9800
 #define RCT2_ADDRESS_SAVE_PROMPT_MODE				0x009A9802
@@ -104,6 +106,8 @@
 #define RCT2_ADDRESS_VIEWPORT_ZOOM					0x009AC126
 
 #define RCT2_ADDRESS_RUN_INTRO_TICK_PART			0x009AC319
+
+#define RCT2_ADDRESS_RIDE_ENTRIES					0x009ACFA4
 
 #define RCT2_ADDRESS_INSTALLED_OBJECT_LIST			0x009ADAE8
 
@@ -184,6 +188,13 @@
 #define RCT2_ADDRESS_G1_ELEMENTS					0x009EBD28
 
 #define RCT2_ADDRESS_PATH_TYPES						0x009ADA14
+														
+#define RCT2_ADDRESS_SMALL_SCENERY_ENTRIES			0x009AD1A4
+#define RCT2_ADDRESS_LARGE_SCENERY_ENTRIES			0x009AD594
+#define RCT2_ADDRESS_WALL_SCENERY_ENTRIES			0x009AD794
+#define RCT2_ADDRESS_BANNER_SCENERY_ENTRIES			0x009AD994
+#define RCT2_ADDRESS_PATH_BIT_SCENERY_ENTRIES		0x009ADA54
+#define RCT2_ADDRESS_SCENERY_SET_ENTRIES			0x009ADA90
 
 //Every pixel changed by rain is stored.
 //32bit (pixel_offset 24 bit)(pixel_colour 8 bit)
@@ -414,6 +425,10 @@
 
 #define RCT2_ADDRESS_INPUT_QUEUE					0x01424340
 
+#define RCT2_ADDRESS_COMMON_FORMAT_ARGS             0x013CE952
+
+#define RCT2_ADDRESS_STAFF_MODE_ARRAY               0x013CA672
+
 static void RCT2_CALLPROC_EBPSAFE(int address)
 {
 	#ifdef _MSC_VER
@@ -429,7 +444,7 @@ static void RCT2_CALLPROC_EBPSAFE(int address)
 	#endif
 }
 
-static void RCT2_CALLPROC_X(int address, int _eax, int _ebx, int _ecx, int _edx, int _esi, int _edi, int _ebp)
+static int RCT2_CALLPROC_X(int address, int _eax, int _ebx, int _ecx, int _edx, int _esi, int _edi, int _ebp)
 {
 	#ifdef _MSC_VER
 	__asm {
@@ -442,6 +457,7 @@ static void RCT2_CALLPROC_X(int address, int _eax, int _ebx, int _ecx, int _edx,
 		mov edi, _edi
 		mov ebp, _ebp
 		call [esp]
+		lahf
 		add esp, 4
 	}
 	#else
@@ -458,6 +474,7 @@ static void RCT2_CALLPROC_X(int address, int _eax, int _ebx, int _ecx, int _edx,
 		mov edi, %[_edi] 	\n\
 		mov ebp, %[_ebp] 	\n\
 		call [esp] 	\n\
+		lahf \n\
 		add esp, 4 	\n\
 		pop ebp \n\
 		pop ebx \n\

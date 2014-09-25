@@ -1819,7 +1819,7 @@ int gfx_draw_string_centred_wrapped(rct_drawpixelinfo *dpi, void *args, int x, i
 		int half_width = gfx_get_string_width(buffer) / 2;
 		gfx_draw_string(dpi, buffer, 0xFE, x - half_width, line_y);
 
-		buffer += strlen(buffer) + 1;
+		buffer += get_string_length(buffer) + 1;
         line_y += line_height;
 	}
 
@@ -1874,7 +1874,7 @@ int gfx_draw_string_left_wrapped(rct_drawpixelinfo *dpi, void *args, int x, int 
 
 	for (int line = 0; line <= num_lines; ++line) {
 		gfx_draw_string(dpi, buffer, 0xFE, x, line_y);
-		buffer += strlen(buffer) + 1;
+		buffer += get_string_length(buffer) + 1;
         line_y += line_height;
 	} 
 
@@ -2072,7 +2072,7 @@ void gfx_draw_string(rct_drawpixelinfo *dpi, char *buffer, int colour, int x, in
 		// Control codes
 		switch (al) {
 		case FORMAT_MOVE_X://Start New Line at start+buffer x, same y. (Overwrite?)
-			max_x = x + *++buffer;
+			max_x = x + (uint8)*++buffer;
 			break;
 		case FORMAT_ADJUST_PALETTE:
 			al = *++buffer;
@@ -2265,14 +2265,13 @@ rct_drawpixelinfo* clip_drawpixelinfo(rct_drawpixelinfo* dpi, int left, int widt
 	newDrawPixelInfo->height = dpi->height;
 	newDrawPixelInfo->pitch = dpi->pitch;
 	newDrawPixelInfo->zoom_level = 0;
-	newDrawPixelInfo->var_0F = dpi->var_0F;
 
 	if (left > newDrawPixelInfo->x) {
-		uint16 newWidth = left - newDrawPixelInfo->x;
-		newDrawPixelInfo->width -= newWidth;
+		uint16 clippedFromLeft = left - newDrawPixelInfo->x;
+		newDrawPixelInfo->width -= clippedFromLeft;
 		newDrawPixelInfo->x = left;
-		newDrawPixelInfo->pitch += newWidth;
-		newDrawPixelInfo->bits += newWidth;
+		newDrawPixelInfo->pitch += clippedFromLeft;
+		newDrawPixelInfo->bits += clippedFromLeft;
 	}
 
 	int stickOutWidth = newDrawPixelInfo->x + newDrawPixelInfo->width - right;
@@ -2282,10 +2281,10 @@ rct_drawpixelinfo* clip_drawpixelinfo(rct_drawpixelinfo* dpi, int left, int widt
 	}
 
 	if (top > newDrawPixelInfo->y) {
-		uint16 newHeight = top - newDrawPixelInfo->y;
-		newDrawPixelInfo->height = newHeight;
+		uint16 clippedFromTop = top - newDrawPixelInfo->y;
+		newDrawPixelInfo->height -= clippedFromTop;
 		newDrawPixelInfo->y = top;
-		int bitsPlus = (newDrawPixelInfo->pitch + newDrawPixelInfo->width) * newHeight;
+		uint32 bitsPlus = (newDrawPixelInfo->pitch + newDrawPixelInfo->width) * clippedFromTop;
 		newDrawPixelInfo->bits += bitsPlus;
 	}
 

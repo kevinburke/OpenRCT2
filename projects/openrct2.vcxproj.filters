@@ -162,6 +162,12 @@
     <ClInclude Include="..\src\input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\scenery.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\window_scenery.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\game.c">
@@ -380,10 +386,16 @@
     <ClCompile Include="..\src\staff.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\window_scenery.c">
+      <Filter>Windows</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\window_ride.c">
+      <Filter>Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\window_credits.c">
       <Filter>Windows</Filter>
     </ClCompile>
   </ItemGroup>
@@ -412,6 +424,9 @@
       <Filter>Data\Language</Filter>
     </Text>
     <Text Include="..\data\language\spanish_sp.txt">
+      <Filter>Data\Language</Filter>
+    </Text>
+    <Text Include="..\data\language\swedish.txt">
       <Filter>Data\Language</Filter>
     </Text>
   </ItemGroup>

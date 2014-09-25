@@ -21,7 +21,9 @@
 #include <string.h>
 #include "addresses.h"
 #include "audio.h"
+#include "game.h"
 #include "gfx.h"
+#include "map.h"
 #include "osinterface.h"
 #include "rct2.h"
 #include "widget.h"
@@ -36,6 +38,28 @@
 #define MAX_NUMBER_WINDOWS 11
 
 rct_window* g_window_list = RCT2_ADDRESS(RCT2_ADDRESS_WINDOW_LIST, rct_window);
+
+// converted from uint16 values at 0x009A41EC - 0x009A4230
+// these are percentage coordinates of the viewport to center to, if a window is obscuring a location, the next is tried
+float window_scroll_locations[][2] = {
+	0.5f,	0.5f,
+	0.75f,	0.5f,
+	0.25f,	0.5f,
+	0.5f,	0.75f,
+	0.5f,	0.25f,
+	0.75f,	0.75f,
+	0.75f,	0.25f,
+	0.25f,	0.75f,
+	0.25f,	0.25f,
+	0.125f,	0.5f,
+	0.875f,	0.5f,
+	0.5f,	0.125f,
+	0.5f,	0.875f,
+	0.875f,	0.125f,
+	0.875f,	0.875f,
+	0.125f,	0.875f,
+	0.125f,	0.125f,
+};
 
 static void window_all_wheel_input();
 static int window_draw_split(rct_window *w, int left, int top, int right, int bottom);
@@ -232,7 +256,7 @@ static int window_wheel_input(rct_window *w, int wheel)
 			continue;
 
 		// Originally always checked first scroll view, bug maybe?
-		scroll = &w->scrolls[i * sizeof(rct_scroll)];
+		scroll = &w->scrolls[i];
 		if (scroll->flags & (HSCROLLBAR_VISIBLE | VSCROLLBAR_VISIBLE)) {
 			window_scroll_wheel_input(w, i, wheel);
 			return 1;
@@ -306,7 +330,7 @@ static void window_all_wheel_input()
 			if (widgetIndex != -1) {
 				widget = &w->widgets[widgetIndex];
 				if (widget->type == WWT_SCROLL) {
-					scroll = &w->scrolls[RCT2_GLOBAL(0x01420075, uint8) * sizeof(rct_scroll)];
+					scroll = &w->scrolls[RCT2_GLOBAL(0x01420075, uint8)];
 					if (scroll->flags & (HSCROLLBAR_VISIBLE | VSCROLLBAR_VISIBLE)) {
 						window_scroll_wheel_input(w, window_get_scroll_index(w, widgetIndex), wheel);
 						return;
@@ -381,7 +405,7 @@ rct_window *window_create(int x, int y, int width, int height, uint32 *event_han
 	// Play sounds and flash the window
 	if (!(flags & (WF_STICK_TO_BACK | WF_STICK_TO_FRONT))){
 		w->flags |= WF_WHITE_BORDER_MASK;
-		sound_play_panned(SOUND_WINDOW_OPEN, x + (width / 2));
+		sound_play_panned(SOUND_WINDOW_OPEN, x + (width / 2), 0, 0, 0);
 	}
 
 	w->number = 0;
@@ -656,7 +680,8 @@ void window_invalidate(rct_window *window)
 /**
  * 
  *  rct2: 0x006EC3AC
- *
+ * See also widget_invalidate that will probably be used
+ * when cls is > 0x7F.
  * @param cls (ax)
  * @param number (bx)
  */
@@ -717,6 +742,7 @@ void window_init_scroll_widgets(rct_window *w)
 		}
 
 		scroll = &w->scrolls[scroll_index];
+		scroll->flags = 0;
 		window_get_scroll_size(w, scroll_index, &width, &height);
 		scroll->h_left = 0;
 		scroll->h_right = width + 1;
@@ -949,12 +975,87 @@ void window_scroll_to_viewport(rct_window *w)
 }
 
 /**
- * 
- *  rct2: 0x006E7C9C
- */
+*
+*  rct2: 0x006E7C9C
+* @param w (esi)
+* @param x (eax)
+* @param y (ecx)
+* @param z (edx)
+*/
 void window_scroll_to_location(rct_window *w, int x, int y, int z)
 {
-	RCT2_CALLPROC_X(0x006E7C9C, x, 0, y, z, (int)w, 0, 0);
+	if (w->viewport) {
+		sint16 height = map_element_height(x, y);
+		if (z < height - 16) {
+			if (!(w->viewport->flags & 1 << 0)) {
+				w->viewport->flags |= 1 << 0;
+				window_invalidate(w);
+			}
+		} else {
+			if (w->viewport->flags & 1 << 0) {
+				w->viewport->flags &= ~(1 << 0);
+				window_invalidate(w);
+			}
+		}
+		sint16 sx;
+		sint16 sy;
+		switch (RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, uint8)) {
+			case 0:
+				sx = y - x;
+				sy = ((x + y) / 2) - z;
+				break;
+			case 1:
+				sx = -y - x;
+				sy = ((-x + y) / 2) - z;
+				break;
+			case 2:
+				sx = -y + x;
+				sy = ((-x - y) / 2) - z;
+				break;
+			case 3:
+				sx = y + x;
+				sy = ((x - y) / 2) - z;
+				break;
+		}
+		int i = 0;
+		if (!(RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) & SCREEN_FLAGS_TITLE_DEMO)) {
+			int found = 0;
+			while (!found) {
+				sint16 x2 = w->viewport->x + (sint16)(w->viewport->width * window_scroll_locations[i][0]);
+				sint16 y2 = w->viewport->y + (sint16)(w->viewport->height * window_scroll_locations[i][1]);
+				rct_window* w2 = w;
+				while (1) {
+					w2++;
+					if (w2 >= RCT2_GLOBAL(RCT2_ADDRESS_NEW_WINDOW_PTR, rct_window*)) {
+						found = 1;
+						break;
+					}
+					sint16 x1 = w2->x - 10;
+					sint16 y1 = w2->y - 10;
+					if (x2 >= x1 && x2 <= w2->width + x1 + 20) {
+						if (y2 >= y1 && y2 <= w2->height + y1 + 20) {
+							// window is covering this area, try the next one
+							i++;
+							found = 0;
+							break;
+						}
+					}
+				}
+				if (i >= countof(window_scroll_locations)) {
+					i = 0;
+					found = 1;
+				}
+			}
+		}
+		// rct2: 0x006E7C76
+		if (w->viewport_target_sprite == -1) {
+			if (!(w->flags & WF_2)) {
+				w->saved_view_x = sx - (sint16)(w->viewport->view_width * window_scroll_locations[i][0]);
+				w->saved_view_y = sy - (sint16)(w->viewport->view_height * window_scroll_locations[i][1]);
+				w->flags |= WF_SCROLLING_TO_LOCATION;
+			}
+		}
+	}
 }
 
 /**
@@ -963,7 +1064,49 @@ void window_scroll_to_location(rct_window *w, int x, int y, int z)
  */
 void window_rotate_camera(rct_window *w)
 {
-	RCT2_CALLPROC_X(0x0068881A, 0, 0, 0, 0, (int)w, 0, 0);
+	//RCT2_CALLPROC_X(0x0068881A, 0, 0, 0, 0, (int)w, 0, 0);
+
+	rct_viewport *viewport = w->viewport;
+	if (viewport == NULL)
+		return;
+
+	sint16 x = (viewport->width >> 1) + viewport->x;
+	sint16 y = (viewport->height >> 1) + viewport->y;
+	sint16 z;
+
+	uint8 rot = RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, uint8);
+
+	int ecx, edx, esi, edi = (int)viewport, ebp;
+	//has something to do with checking if middle of the viewport is obstructed
+	RCT2_CALLFUNC_X(0x00688972, (int*)&x, (int*)&y, &ecx, &edx, &esi, &edi, &ebp);
+	rct_viewport *other = (rct_viewport*)edi;
+
+	// other != viewport probably triggers on viewports in ride or guest window?
+	// x is 0x8000 if middle of viewport is obstructed by another window?
+	if (x == (sint16)SPRITE_LOCATION_NULL || other != viewport){
+		x = (viewport->view_width >> 1) + viewport->view_x;
+		y = (viewport->view_height >> 1) + viewport->view_y;
+
+		sub_689174(&x, &y, &z, rot);
+	} else {
+		z = map_element_height(x, y);
+	}
+
+	RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, uint32) = (rot + 1) % 4;
+
+	int new_x, new_y;
+	center_2d_coordinates(x, y, z, &new_x, &new_y, viewport);
+
+	w->saved_view_x = new_x;
+	w->saved_view_y = new_y;
+	viewport->view_x = new_x;
+	viewport->view_y = new_y;
+
+	window_invalidate(w);
+
+	RCT2_CALLPROC_EBPSAFE(0x00688956);
+
+	sub_0x0069E9A7();
 }
 
 /**
@@ -1531,13 +1674,13 @@ void RCT2_CALLPROC_WE_MOUSE_DOWN(int address,  int widgetIndex, rct_window*w, rc
 }
 
 /* Based on rct2: 0x6987ED and another version from window_park */
-void window_align_tabs( rct_window *w, uint8 start_tab_id, uint8 end_tab_id )
+void window_align_tabs(rct_window *w, uint8 start_tab_id, uint8 end_tab_id)
 {
-	int x = w->widgets[start_tab_id].left;
+	int i, x = w->widgets[start_tab_id].left;
 	int tab_width = w->widgets[start_tab_id].right - w->widgets[start_tab_id].left;
 	
-	for (int i = start_tab_id; i < end_tab_id; ++i){
-		if ( !(w->disabled_widgets & (1LL << i)) ){
+	for (i = start_tab_id; i <= end_tab_id; i++) {
+		if (!(w->disabled_widgets & (1LL << i))) {
 			w->widgets[i].left = x;
 			w->widgets[i].right = x + tab_width;
 			x += tab_width + 1;

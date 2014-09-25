@@ -442,6 +442,7 @@ static void widget_text_unknown(rct_drawpixelinfo *dpi, rct_window *w, int widge
 			widget->right - widget->left - 2
 		);
 	} else {
+		colour &= ~(1 << 7);
 		if (widget_is_disabled(w, widgetIndex))
 			colour |= 0x40;
 		gfx_draw_string_centred_clipped(
@@ -736,13 +737,15 @@ static void widget_checkbox_draw(rct_drawpixelinfo *dpi, rct_window *w, int widg
 	// Get the colour
 	colour = w->colours[widget->colour];
 
-	// checkbox
-	gfx_fill_rect_inset(dpi, l, t, l + 9, b - 1, colour, 0x60);
+	if (widget->type != WWT_24) {
+		// checkbox
+		gfx_fill_rect_inset(dpi, l, t, l + 9, b - 1, colour, 0x60);
 
-	// fill it when checkbox is pressed
-	if (widget_is_pressed(w, widgetIndex)) {
-		RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_FONT_SPRITE_BASE, uint16) = 224;
-		gfx_draw_string(dpi, (char*)0x009DED72, colour & 0x7F, l, t);
+		// fill it when checkbox is pressed
+		if (widget_is_pressed(w, widgetIndex)) {
+			RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_FONT_SPRITE_BASE, uint16) = 224;
+			gfx_draw_string(dpi, (char*)0x009DED72, colour & 0x7F, l, t);
+		}
 	}
 
 	// draw the text
@@ -805,6 +808,9 @@ static void widget_scroll_draw(rct_drawpixelinfo *dpi, rct_window *w, int widget
 		b -= 11;
 	if (scroll->flags & VSCROLLBAR_VISIBLE)
 		r -= 11;
+
+	b++;
+	r++;
 
 	// Create a new inner scroll dpi
 	scroll_dpi = *dpi;

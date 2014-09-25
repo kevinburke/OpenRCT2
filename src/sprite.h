@@ -36,25 +36,36 @@ enum SPRITE_IDENTIFIER{
 	SPRITE_IDENTIFIER_LITTER = 3,
 };
 
+typedef enum {
+	SPRITE_LINKEDLIST_OFFSET_VEHICLE = 2,
+	SPRITE_LINKEDLIST_OFFSET_PEEP = 4,
+	SPRITE_LINKEDLIST_OFFSET_FLOATING_TEXT = 6,
+	SPRITE_LINKEDLIST_OFFSET_FLOATING_LITTER = 8,
+	SPRITE_LINKEDLIST_OFFSET_UNKNOWN = 10
+} SPRITE_LINKEDLIST_OFFSET;
+
 typedef struct {
 	uint8 sprite_identifier;		// 0x00
 	uint8 pad_01;
 	uint16 var_02;
 	uint16 next;					// 0x04
 	uint16 previous;				// 0x06
-	uint8 var_08;
+	uint8 linked_list_type_offset;	// 0x08 Valid values are SPRITE_LINKEDLIST_OFFSET_...
 	uint8 pad_09;
 	uint16 sprite_index;			// 0x0A
 	uint8 pad_0C[2];
 	sint16 x;						// 0x0E
 	sint16 y;						// 0x10
 	sint16 z;						// 0x12
-	uint16 pad_14;
+	uint8 var_14;					// 0x14
+	uint8 var_15;					// 0x15
 	sint16 var_16; //x related
 	sint16 var_18; //y related
 	sint16 var_1A; //x related
 	sint16 var_1C; //y related
-	uint8  sprite_direction; //direction of sprite?
+	uint8  sprite_direction; //direction of sprite? 0x1e
+	uint8 pad_1F[3]; // 0x1f
+	uint16 name_string_idx;			// 0x22
 } rct_unk_sprite;
 
 typedef struct {
@@ -63,7 +74,7 @@ typedef struct {
 	uint16 var_02;					// 0x02
 	uint16 next;					// 0x04
 	uint16 previous;				// 0x06
-	uint8 var_08;
+	uint8 linked_list_type_offset;	// 0x08 Valid values are SPRITE_LINKEDLIST_OFFSET_...
 	uint8 pad_09;
 	uint16 sprite_index;			// 0x0A
 	uint8 pad_0B[0x19];
@@ -86,7 +97,9 @@ typedef union {
 extern rct_sprite* g_sprite_list;
 
 void create_balloon(int x, int y, int z, int colour);
+rct_sprite *create_sprite(uint8 bl);
 void reset_sprite_list();
 void reset_0x69EBE4();
+void move_sprite_to_list(rct_sprite *sprite, uint8 cl);
 
 #endif

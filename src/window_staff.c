@@ -1,5 +1,5 @@
-/*****************************************************************************
-* Copyright (c) 2014 Maciek Baron, Daniel Tar
+﻿/*****************************************************************************
+* Copyright (c) 2014 Maciek Baron, Dániel Tar
 * OpenRCT2, an open source clone of Roller Coaster Tycoon 2.
 *
 * This file is part of OpenRCT2.
@@ -29,6 +29,7 @@
 #include "viewport.h"
 #include "widget.h"
 #include "window.h"
+#include "window_dropdown.h"
 
 enum {
 	WINDOW_STAFF_TAB_HANDYMEN,
@@ -171,11 +172,7 @@ void window_staff_open()
 	window->colours[2] = 4;
 }
 
-void window_staff_cancel_tools() {
-	rct_window *w;
-
-	window_get_register(w);
-
+void window_staff_cancel_tools(rct_window *w) {
 	int toolWindowClassification = RCT2_GLOBAL(RCT2_ADDRESS_TOOL_WINDOWCLASS, rct_windowclass);
 	int toolWindowNumber = RCT2_GLOBAL(RCT2_ADDRESS_TOOL_WINDOWNUMBER, rct_windownumber);
 	if (RCT2_GLOBAL(0x009DE518, uint32) & (1 << 3))
@@ -264,10 +261,9 @@ static void window_staff_resize()
 *
 *  rct2: 0x006BD971
 */
-static void window_staff_mousedown(int widgetIndex, rct_window*w, rct_widget* widget)
+static void window_staff_mousedown(int widgetIndex, rct_window* w, rct_widget* widget)
 {
 	short newSelectedTab;
-	int eax;
 
 	switch (widgetIndex) {
 	case WIDX_STAFF_HANDYMEN_TAB:
@@ -283,8 +279,7 @@ static void window_staff_mousedown(int widgetIndex, rct_window*w, rct_widget* wi
 		window_staff_cancel_tools(w);
 		break;
 	case WIDX_STAFF_UNIFORM_COLOR_PICKER:
-		eax = (RCT2_ADDRESS(RCT2_ADDRESS_HANDYMAN_COLOUR, uint8)[RCT2_GLOBAL(RCT2_ADDRESS_WINDOW_STAFF_LIST_SELECTED_TAB, uint8)] << 8) + 0x80 + w->colours[1];
-		RCT2_CALLPROC_X(0x006ED43D, eax, 0, 0, widgetIndex, (int)w, (int)widget, 0xFFFFFFFF);
+		window_dropdown_show_colour(w, widget, w->colours[1], RCT2_ADDRESS(RCT2_ADDRESS_HANDYMAN_COLOUR, uint8)[RCT2_GLOBAL(RCT2_ADDRESS_WINDOW_STAFF_LIST_SELECTED_TAB, uint8)]);
 		break;
 	}
 
@@ -630,7 +625,7 @@ void window_staff_scrollpaint()
 				gfx_draw_string_left_clipped(dpi, format, (void*)0x013CE952, 0, 175, y - 1, 305);
 
 				// True if a patrol path is set for the worker
-				if (RCT2_ADDRESS(0x013CA672, uint8)[peep->var_C5] & 2) {
+				if (RCT2_ADDRESS(RCT2_ADDRESS_STAFF_MODE_ARRAY, uint8)[peep->staff_id] & 2) {
 					gfx_draw_sprite(dpi, 0x13FD, 110, y - 1, 0);
 				}
 
