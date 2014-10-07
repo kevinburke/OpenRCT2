@@ -31,6 +31,7 @@
 #include "park.h"
 #include "peep.h"
 #include "rct2.h"
+#include "research.h"
 #include "ride.h"
 #include "sawyercoding.h"
 #include "scenario.h"
@@ -140,12 +141,126 @@ void game_create_windows()
 }
 
 /**
- * 
- *  rct2: 0x006838BD
- */
-void update_water_animation()
+*
+*  rct2: 0x006838BD
+*/
+void update_palette_effects()
 {
-	RCT2_CALLPROC_EBPSAFE(0x006838BD);
+	if (RCT2_GLOBAL(RCT2_ADDRESS_LIGHTNING_ACTIVE, uint8) == 1) {
+		// change palette to lighter color during lightning
+		int palette = 1532;
+		if (RCT2_GLOBAL(0x009ADAE0, sint32) != -1) {
+			palette = RCT2_GLOBAL(RCT2_GLOBAL(0x009ADAE0, int) + 2, int);
+		}
+		rct_g1_element g1_element = RCT2_ADDRESS(RCT2_ADDRESS_G1_ELEMENTS, rct_g1_element)[palette];
+		int xoffset = g1_element.x_offset;
+		xoffset = xoffset * 4;
+		for (int i = 0; i < g1_element.width; i++) {
+			RCT2_ADDRESS(0x01424680 + xoffset, uint8)[(i * 4) + 0] = -((0xFF - g1_element.offset[(i * 3) + 0]) / 2) - 1;
+			RCT2_ADDRESS(0x01424680 + xoffset, uint8)[(i * 4) + 1] = -((0xFF - g1_element.offset[(i * 3) + 1]) / 2) - 1;
+			RCT2_ADDRESS(0x01424680 + xoffset, uint8)[(i * 4) + 2] = -((0xFF - g1_element.offset[(i * 3) + 2]) / 2) - 1;
+		}
+		RCT2_GLOBAL(0x014241BC, uint32) = 2;
+		osinterface_update_palette(RCT2_ADDRESS(0x01424680, uint8), 10, 236);
+		RCT2_GLOBAL(0x014241BC, uint32) = 0;
+		RCT2_GLOBAL(RCT2_ADDRESS_LIGHTNING_ACTIVE, uint8)++;
+	} else {
+		if (RCT2_GLOBAL(RCT2_ADDRESS_LIGHTNING_ACTIVE, uint8) == 2) {
+			// change palette back to normal after lightning
+			int palette = 1532;
+			if (RCT2_GLOBAL(0x009ADAE0, sint32) != -1) {
+				palette = RCT2_GLOBAL(RCT2_GLOBAL(0x009ADAE0, int) + 2, int);
+			}
+			rct_g1_element g1_element = RCT2_ADDRESS(RCT2_ADDRESS_G1_ELEMENTS, rct_g1_element)[palette];
+			int xoffset = g1_element.x_offset;
+			xoffset = xoffset * 4;
+			for (int i = 0; i < g1_element.width; i++) {
+				RCT2_ADDRESS(0x01424680 + xoffset, uint8)[(i * 4) + 0] = g1_element.offset[(i * 3) + 0];
+				RCT2_ADDRESS(0x01424680 + xoffset, uint8)[(i * 4) + 1] = g1_element.offset[(i * 3) + 1];
+				RCT2_ADDRESS(0x01424680 + xoffset, uint8)[(i * 4) + 2] = g1_element.offset[(i * 3) + 2];
+			}
+		}
+
+		// animate the water/lava/chain movement palette
+		int q = 0;
+		int weather_colour = RCT2_ADDRESS(0x98195C, uint32)[RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_WEATHER_GLOOM, uint8)];
+		if (weather_colour != -1) {
+			q = 1;
+			if (weather_colour != 0x2000031) {
+				q = 2;
+			}
+		}
+		uint32 j = RCT2_GLOBAL(0x009DE584, uint32);
+		j = (((uint16)((~j / 2) * 128) * 15) >> 16);
+		int p = 1533;
+		if (RCT2_GLOBAL(0x009ADAE0, int) != -1) {
+			p = RCT2_GLOBAL(RCT2_GLOBAL(0x009ADAE0, int) + 0x6, int);
+		}
+		rct_g1_element g1_element = RCT2_ADDRESS(RCT2_ADDRESS_G1_ELEMENTS, rct_g1_element)[q + p];
+		uint8* vs = &g1_element.offset[j * 3];
+		uint8* vd = RCT2_ADDRESS(0x01424A18, uint8);
+		int n = 5;
+		for (int i = 0; i < n; i++) {
+			vd[0] = vs[0];
+			vd[1] = vs[1];
+			vd[2] = vs[2];
+			vs += 9;
+			if (vs >= &g1_element.offset[9 * n]) {
+				vs -= 9 * n;
+			}
+			vd += 4;
+		}
+
+		p = 1536;
+		if (RCT2_GLOBAL(0x009ADAE0, int) != -1) {
+			p = RCT2_GLOBAL(RCT2_GLOBAL(0x009ADAE0, int) + 0xA, int);
+		}
+		g1_element = RCT2_ADDRESS(RCT2_ADDRESS_G1_ELEMENTS, rct_g1_element)[q + p];
+		vs = &g1_element.offset[j * 3];
+		n = 5;
+		for (int i = 0; i < n; i++) {
+			vd[0] = vs[0];
+			vd[1] = vs[1];
+			vd[2] = vs[2];
+			vs += 9;
+			if (vs >= &g1_element.offset[9 * n]) {
+				vs -= 9 * n;
+			}
+			vd += 4;
+		}
+
+		j = ((uint16)(RCT2_GLOBAL(0x009DE584, uint32) * -960) * 3) >> 16;
+		p = 1539;
+		g1_element = RCT2_ADDRESS(RCT2_ADDRESS_G1_ELEMENTS, rct_g1_element)[q + p];
+		vs = &g1_element.offset[j * 3];
+		vd += 12;
+		n = 3;
+		for (int i = 0; i < n; i++) {
+			vd[0] = vs[0];
+			vd[1] = vs[1];
+			vd[2] = vs[2];
+			vs += 3;
+			if (vs >= &g1_element.offset[3 * n]) {
+				vs -= 3 * n;
+			}
+			vd += 4;
+		}
+
+		RCT2_GLOBAL(0x014241BC, uint32) = 2;
+		osinterface_update_palette(RCT2_ADDRESS(0x01424680, uint8), 230, 16);
+		RCT2_GLOBAL(0x014241BC, uint32) = 0;
+		if (RCT2_GLOBAL(RCT2_ADDRESS_LIGHTNING_ACTIVE, uint8) == 2) {
+			RCT2_GLOBAL(0x014241BC, uint32) = 2;
+			osinterface_update_palette(RCT2_ADDRESS(0x01424680, uint8), 10, 236);
+			RCT2_GLOBAL(0x014241BC, uint32) = 0;
+			RCT2_GLOBAL(RCT2_ADDRESS_LIGHTNING_ACTIVE, uint8) = 0;
+		}
+	}
+	if (RCT2_GLOBAL(0x009E2C4C, uint32) == 2 || RCT2_GLOBAL(0x009E2C4C, uint32) == 1) {
+		if (RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_CAP_BPP, uint32) != 8) {
+			RCT2_GLOBAL(0x009E2C78, int) = 1;
+		}
+	}
 }
 
 /**
@@ -350,7 +465,7 @@ void game_update()
 	RCT2_GLOBAL(0x0141F568, uint8) = RCT2_GLOBAL(0x0013CA740, uint8);
 	game_handle_input();
 
-	update_water_animation();
+	update_palette_effects();
 	update_rain_animation();
 
 	if (RCT2_GLOBAL(0x009AAC73, uint8) != 255) {
@@ -380,7 +495,7 @@ void game_logic_update()
 	RCT2_CALLPROC_EBPSAFE(0x00672AA4);	// update text effects
 	RCT2_CALLPROC_EBPSAFE(0x006ABE4C);	// update rides
 	park_update();
-	RCT2_CALLPROC_EBPSAFE(0x00684C7A);	// update research
+	research_update();
 	RCT2_CALLPROC_EBPSAFE(0x006B5A2A);	// update ride ratings
 	ride_measurements_update();
 	RCT2_CALLPROC_EBPSAFE(0x0068AFAD);
@@ -726,7 +841,7 @@ int game_load_save()
 		if (s6Header->num_packed_objects > 0) {
 			j = 0;
 			for (i = 0; i < s6Header->num_packed_objects; i++)
-				j += object_load_packed();
+				j += object_load_packed(file);
 			if (j > 0)
 				object_list_load();
 		}

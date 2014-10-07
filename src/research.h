@@ -18,13 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
-#ifndef _INPUT_H_
-#define _INPUT_H_
+#ifndef _RESEARCH_H_
+#define _RESEARCH_H_
 
-void game_handle_input();
-void game_handle_keyboard_input();
-void handle_shortcut_command(int shortcutIndex);
+enum {
+	RESEARCH_FUNDING_NONE,
+	RESEARCH_FUNDING_MINIMUM,
+	RESEARCH_FUNDING_NORMAL,
+	RESEARCH_FUNDING_MAXIMUM
+};
 
-void store_mouse_input(int state);
+enum {
+	RESEARCH_STAGE_INITIAL_RESEARCH,
+	RESEARCH_STAGE_DESIGNING,
+	RESEARCH_STAGE_COMPLETING_DESIGN,
+	RESEARCH_STAGE_UNKNOWN
+};
+
+extern uint8 gResearchUncompletedCategories;
+
+void research_update_uncompleted_types();
+void research_update();
 
 #endif

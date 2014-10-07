@@ -57,6 +57,9 @@ static SDL_Cursor* _cursors[NO_CURSORS];
 
 static const int _fullscreen_modes[] = { 0, SDL_WINDOW_FULLSCREEN, SDL_WINDOW_FULLSCREEN_DESKTOP };
 
+static unsigned int _lastGestureTimestamp;
+static float _gestureRadius;
+
 void osinterface_init()
 {
 	osinterface_create_window();
@@ -65,6 +68,17 @@ void osinterface_init()
 	memset(gKeysPressed, 0, sizeof(unsigned char) * 256);
 
 	// RCT2_CALLPROC(0x00404584); // dinput_init()
+}
+
+int osinterface_scancode_to_rct_keycode(int sdl_key){
+	char keycode = (char)SDL_GetKeyFromScancode((SDL_Scancode)sdl_key);
+
+	// Until we reshufle the text files to use the new positions 
+	// this will suffice to move the majority to the correct positions.
+	// Note any special buttons PgUp PgDwn are mapped wrong.
+	if (keycode >= 'a' && keycode <= 'z')keycode = toupper(keycode);
+
+	return keycode;
 }
 
 /**
@@ -393,6 +407,25 @@ void osinterface_process_messages()
 				//this function is normally called only in-game (in game_update)
 				//calling it here will save screenshots even while in main menu
 				screenshot_check();
+			}
+			break;
+		case SDL_MULTIGESTURE:
+			if (e.mgesture.numFingers == 2) {
+				if (e.mgesture.timestamp > _lastGestureTimestamp + 1000)
+					_gestureRadius = 0;
+				_lastGestureTimestamp = e.mgesture.timestamp;
+				_gestureRadius += e.mgesture.dDist;
+
+				// Zoom gesture
+				const int tolerance = 128;
+				int gesturePixels = (int)(_gestureRadius * RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_WIDTH, sint16));
+				if (gesturePixels > tolerance) {
+					_gestureRadius = 0;
+					handle_shortcut_command(SHORTCUT_ZOOM_VIEW_IN);
+				} else if (gesturePixels < -tolerance) {
+					_gestureRadius = 0;
+					handle_shortcut_command(SHORTCUT_ZOOM_VIEW_OUT);
+				}
 			}
 			break;
 		default:

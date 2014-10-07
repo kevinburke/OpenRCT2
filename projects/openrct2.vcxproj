@@ -41,6 +41,7 @@
     <ClInclude Include="..\src\park.h" />
     <ClInclude Include="..\src\peep.h" />
     <ClInclude Include="..\src\rct2.h" />
+    <ClInclude Include="..\src\research.h" />
     <ClInclude Include="..\src\ride.h" />
     <ClInclude Include="..\src\ride_data.h" />
     <ClInclude Include="..\src\ride_ratings.h" />
@@ -94,6 +95,7 @@
     <ClCompile Include="..\src\park.c" />
     <ClCompile Include="..\src\peep.c" />
     <ClCompile Include="..\src\rct2.c" />
+    <ClCompile Include="..\src\research.c" />
     <ClCompile Include="..\src\ride.c" />
     <ClCompile Include="..\src\ride_data.c" />
     <ClCompile Include="..\src\ride_ratings.c" />
@@ -134,6 +136,8 @@
     <ClCompile Include="..\src\window_ride.c" />
     <ClCompile Include="..\src\window_ride_list.c" />
     <ClCompile Include="..\src\window_save_prompt.c" />
+    <ClCompile Include="..\src\window_shortcut_keys.c" />
+    <ClCompile Include="..\src\window_shortcut_key_change.c" />
     <ClCompile Include="..\src\window_staff.c" />
     <ClCompile Include="..\src\window_staff_peep.c" />
     <ClCompile Include="..\src\window_title_exit.c" />

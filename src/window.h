@@ -175,6 +175,10 @@ typedef struct {
 	uint16 var_484;
 } track_list_variables;
 
+typedef struct {
+	uint16 var_480;
+} error_variables;
+
 /**
  * Window structure
  * size: 0x4C0
@@ -214,6 +218,7 @@ typedef struct rct_window {
 		ride_variables ride;
 		scenery_variables scenery;
 		track_list_variables track_list;
+		error_variables error;
 	};
 	sint16 page;					// 0x48A
 	sint16 var_48C;
@@ -398,6 +403,9 @@ enum PROMPT_MODE {
 // rct2: 0x01420078
 extern rct_window* g_window_list;
 
+// rct2: 0x00F635EE
+extern ride_list_item _window_track_list_item;
+
 void window_dispatch_update_all();
 void window_update_all();
 rct_window *window_create(int x, int y, int width, int height, uint32 *event_handlers, rct_windowclass cls, uint16 flags);
@@ -468,6 +476,8 @@ void window_staff_open();
 void window_guest_list_open();
 void window_map_open();
 void window_options_open();
+void window_shortcut_keys_open();
+void window_shortcut_change_open(int selected_key);
 void window_peep_open(rct_peep* peep);
 void window_staff_peep_open(rct_peep* peep);
 void window_park_awards_open();

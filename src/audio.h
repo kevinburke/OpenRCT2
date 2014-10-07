@@ -31,9 +31,12 @@ typedef struct {
 extern int gAudioDeviceCount;
 extern audio_device *gAudioDevices;
 
+#define AUDIO_MAX_VEHICLE_SOUNDS 14
+
 void audio_init();
 void audio_quit();
 void audio_get_devices();
+void audio_init1();
 void audio_init2(int device);
 
 #include <dsound.h>
@@ -84,8 +87,8 @@ typedef struct {
 typedef struct {
 	uint32 size;
 	WAVEFORMATEX format;
-	char* data;
-} rct_sound_info;
+	uint8* data;
+} rct_sound_effect;
 
 typedef struct {
 	uint16 id;
@@ -100,12 +103,10 @@ typedef struct {
 	sint16 sound2_volume;	// 0x36
 	sint16 sound2_pan;		// 0x38
 	uint16 sound2_freq;		// 0x3A
-} rct_vehicle_sound;
 
-typedef struct {
-	uint16 id;
-	rct_sound sound;
-} rct_other_sound;
+	void* sound1_channel;
+	void* sound2_channel;
+} rct_vehicle_sound;
 
 typedef struct {
 	uint16 id;
@@ -114,7 +115,12 @@ typedef struct {
 	uint16 frequency;	// 0x6
 	sint16 var_8;
 	uint16 var_A;		// 0xA
-} rct_sound_unknown;
+} rct_vehicle_sound_params;
+
+typedef struct {
+	uint16 id;
+	rct_sound sound;
+} rct_other_sound;
 
 typedef struct {
 	uint8 id;
@@ -140,6 +146,10 @@ typedef struct {
 	uint8 var_9;
 } rct_music_info3;
 
+extern rct_vehicle_sound gVehicleSoundList[AUDIO_MAX_VEHICLE_SOUNDS];
+extern rct_vehicle_sound_params gVehicleSoundParamsList[AUDIO_MAX_VEHICLE_SOUNDS];
+extern rct_vehicle_sound_params *gVehicleSoundParamsListEnd;
+
 int get_dsound_devices();
 int dsound_create_primary_buffer(int a, int device, int channels, int samples, int bits);
 void audio_timefunc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2, int channel);
@@ -155,7 +165,7 @@ void sub_6BC6D8();
 int audio_remove_timer();
 void audio_close();
 LPVOID map_file(LPCSTR lpFileName, DWORD dwCreationDisposition, DWORD dwNumberOfBytesToMap);
-int unmap_sound_info();
+int unmap_sound_effects();
 int sound_prepare(int sound_id, rct_sound *sound, int channels, int software);
 int sound_play_panned(int sound_id, int ebx, sint16 x, sint16 y, sint16 z);
 int sound_play(rct_sound* sound, int looping, int volume, int pan, int frequency);
