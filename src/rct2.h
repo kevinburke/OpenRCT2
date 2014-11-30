@@ -21,9 +21,18 @@
 #ifndef _RCT2_H_
 #define _RCT2_H_
 
+#include <assert.h>
+#include <ctype.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+#ifdef _MSC_VER
+	#include <time.h>
+#endif
 
 typedef signed char sint8;
 typedef signed short sint16;
@@ -91,7 +100,8 @@ typedef fixed32_1dp money32;
 
 #define MONEY32_UNDEFINED				((money32)0x80000000)
 
-void rct2_finish();
+typedef void (EMPTY_ARGS_VOID_POINTER)();
+typedef unsigned short rct_string_id;
 
 enum {
 	SCREEN_FLAGS_PLAYING = 0,
@@ -100,6 +110,8 @@ enum {
 	SCREEN_FLAGS_TRACK_DESIGNER = 4,
 	SCREEN_FLAGS_TRACK_MANAGER = 8,
 };
+
+#define SCREEN_FLAGS_EDITOR (SCREEN_FLAGS_SCENARIO_EDITOR | SCREEN_FLAGS_TRACK_DESIGNER | SCREEN_FLAGS_TRACK_MANAGER)
 
 enum {
 	PATH_ID_G1,
@@ -266,12 +278,14 @@ static const struct file_to_check
 	{ PATH_ID_END,          0 }
 };
 
+int rct2_init();
+void rct2_update();
 void rct2_endupdate();
 void subsitute_path(char *dest, const char *path, const char *filename);
 int check_mutex();
-void check_file_paths();
-void check_file_path(int pathId);
-void check_files_integrity();
+int check_file_paths();
+int check_file_path(int pathId);
+int check_files_integrity();
 const char *get_file_path(int pathId);
 void get_system_info();
 void get_system_time();
@@ -280,5 +294,7 @@ void *rct2_malloc(size_t numBytes);
 void *rct2_realloc(void *block, size_t numBytes);
 void rct2_free(void *block);
 void rct2_quit();
+
+int rct2_open_file(const char *path);
 
 #endif

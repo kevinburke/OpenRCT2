@@ -176,14 +176,15 @@ typedef struct {
 	uint8 guests_in_park_history[32];
 
 	// SC6[10]
-	uint16 word_01357CF2;
-	uint32 word_01357CF4;
+	uint8 active_research_types;
+	uint8 research_progress_stage;
+	uint32 dword_01357CF4;
 	uint8 byte_01357CF8[1000];
-	uint32 dword_013580E0[32];
-	uint16 word_013580E4[16];
-	uint8 byte_013580E6;
-	uint8 byte_013580E7;
-	uint8 byte_013580E8;
+	uint32 dword_013580E0;
+	uint16 research_progress;
+	uint8 next_research_category;
+	uint8 next_research_expected_day;
+	uint8 next_research_expected_month;
 	uint8 byte_013580E9;
 	uint16 park_size;
 	uint16 guest_generation_probability;
@@ -371,6 +372,9 @@ enum {
 	S6_TYPE_SCENARIO
 };
 
+#define S6_RCT2_VERSION 120001
+#define S6_MAGIC_NUMBER 0x00031144
+
 enum {
 	SCENARIO_CATEGORY_BEGINNER,
 	SCENARIO_CATEGORY_CHALLENGING,
@@ -401,10 +405,14 @@ extern rct_scenario_basic *gScenarioList;
 
 int scenario_scores_save();
 void scenario_load_list();
-int scenario_load_basic(const char *path);
-void scenario_load(const char *path);
-void scenario_load_and_play(const rct_scenario_basic *scenario);
+int scenario_load_basic(const char *path, rct_s6_header *header, rct_s6_info *info);
+int scenario_load(const char *path);
+int scenario_load_and_play(const rct_scenario_basic *scenario);
+int scenario_load_and_play_from_path(const char *path);
 void scenario_update();
-int scenario_rand();
+unsigned int scenario_rand();
+int scenario_prepare_for_save();
+int scenario_save(char *path, int flags);
+void scenario_success_submit_name(const char *name);
 
 #endif

@@ -19,114 +19,48 @@
  *****************************************************************************/
  
 #include "addresses.h"
-#include "audio.h"
-#include "climate.h"
+#include "audio/audio.h"
 #include "config.h"
-#include "finance.h"
 #include "game.h"
+#include "editor.h"
 #include "input.h"
-#include "news_item.h"
+#include "localisation/localisation.h"
+#include "interface/screenshot.h"
+#include "interface/viewport.h"
+#include "interface/widget.h"
+#include "interface/window.h"
+#include "management/finance.h"
+#include "management/news_item.h"
+#include "management/research.h"
 #include "object.h"
-#include "osinterface.h"
-#include "park.h"
-#include "peep.h"
-#include "rct2.h"
-#include "research.h"
-#include "ride.h"
-#include "sawyercoding.h"
+#include "peep/peep.h"
+#include "peep/staff.h"
+#include "platform/osinterface.h"
+#include "ride/ride.h"
+#include "ride/ride_ratings.h"
+#include "ride/vehicle.h"
 #include "scenario.h"
-#include "screenshot.h"
-#include "sprite.h"
-#include "string_ids.h"
 #include "title.h"
 #include "tutorial.h"
-#include "vehicle.h"
-#include "viewport.h"
-#include "widget.h"
-#include "window.h"
-#include "staff.h"
-#include "window_error.h"
-#include "window_tooltip.h"
-
+#include "util/sawyercoding.h"
+#include "util/util.h"
+#include "windows/error.h"
+#include "windows/tooltip.h"
+#include "world/climate.h"
+#include "world/park.h"
+#include "world/sprite.h"
 
 int gGameSpeed = 1;
 
-typedef void(*draw_rain_func)(int left, int top, int width, int height);
-
-/**
-*
-*  rct2: 0x00684114
-*/
-void draw_light_rain(int left, int top, int width, int height){
-	int x_start = -RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) + 8;
-	int y_start = (RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) * 3) + 7;
-	y_start = -y_start;
-
-	x_start += left;
-	y_start += top;
-
-	gfx_draw_rain(left, top, width, height, x_start, y_start);
-
-	x_start = -RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) + 0x18;
-	y_start = (RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) * 4) + 0x0D;
-	y_start = -y_start;
-
-	x_start += left;
-	y_start += top;
-	gfx_draw_rain(left, top, width, height, x_start, y_start);
+void game_increase_game_speed()
+{
+	gGameSpeed = min(8, gGameSpeed + 1);
 }
 
-/**
-*
-*  rct2: 0x0068416D
-*/
-void draw_heavy_rain(int left, int top, int width, int height){
-	int x_start = -RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int);
-	int y_start = RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) * 5;
-	y_start = -y_start;
-
-	x_start += left;
-	y_start += top;
-
-	gfx_draw_rain(left, top, width, height, x_start, y_start);
-
-	x_start = -RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) + 0x10;
-	y_start = (RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) * 6) + 5;
-	y_start = -y_start;
-
-	x_start += left;
-	y_start += top;
-
-	gfx_draw_rain(left, top, width, height, x_start, y_start);
-
-	x_start = -RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) + 8;
-	y_start = (RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) * 3) + 7;
-	y_start = -y_start;
-
-	x_start += left;
-	y_start += top;
-
-	gfx_draw_rain(left, top, width, height, x_start, y_start);
-
-	x_start = -RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) + 0x18;
-	y_start = (RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) * 4) + 0x0D;
-	y_start = -y_start;
-
-	x_start += left;
-	y_start += top;
-
-	gfx_draw_rain(left, top, width, height, x_start, y_start);
+void game_reduce_game_speed()
+{
+	gGameSpeed = max(1, gGameSpeed - 1);
 }
-
-/**
-*
-*  rct2: 0x009AC058
-*/
-const draw_rain_func draw_rain_function[] = {
-	NULL,
-	&draw_light_rain,	// Light rain
-	&draw_heavy_rain	// Heavy rain 
-};
 
 /**
  * 
@@ -263,200 +197,70 @@ void update_palette_effects()
 	}
 }
 
-/**
-*
-*  rct2: 0x00684383
-*/
-void call_draw_rain_func(rct_window* w, short left, short right, short top, short bottom, uint32 draw_rain_func)
-{
-	rct_viewport* vp = w->viewport;
-	if (vp == NULL) {
-		return;
-	}
-
-	left = max(left, vp->x);
-	right = min(right, vp->width);
-
-	top = max(top, vp->y);
-	bottom = min(bottom, vp->height);
-
-	if (left >= right || top >= bottom) {
-		return;
-	}
-
-	int width = right - left;
-	int height = bottom - top;
-
-	draw_rain_function[draw_rain_func](left, top, width, height);
-}
-
-/**
-*
-*  rct2: 0x006842AF
-*  From 0x00684383 on: split into call_draw_rain_func
-*/
-void draw_rain_window(rct_window* original_w, short left, short right, short top, short bottom, uint32 draw_rain_func)
-{
-	rct_window* newWindow = RCT2_GLOBAL(RCT2_ADDRESS_NEW_WINDOW_PTR, rct_window*);
-
-	rct_window* w = original_w + 1; // Start from second window
-	for (; ; w++) {
-		if (w >= newWindow) {
-			// Loop ended, draw rain for original_w
-			call_draw_rain_func(original_w, left, right, top, bottom, draw_rain_func);
-			return;
-		}
-
-		if (right <= w->x || bottom <= w->y) {
-			continue;
-		}
-
-		if (RCT_WINDOW_RIGHT(w) <= left || RCT_WINDOW_BOTTOM(w) <= top) {
-			continue;
-		}
-
-		if (left >= w->x) {
-			break;
-		}
-
-		draw_rain_window(original_w, left, w->x, top, bottom, draw_rain_func);
-
-		left = w->x;
-		draw_rain_window(original_w, left, right, top, bottom, draw_rain_func);
-		return;
-	}
-
-	sint16 w_right = RCT_WINDOW_RIGHT(w);
-	if (right > w_right) {
-		draw_rain_window(original_w, left, w_right, top, bottom, draw_rain_func);
-
-		left = w_right;
-		draw_rain_window(original_w, left, right, top, bottom, draw_rain_func); 
-		return;
-	}
-
-	if (top < w->y) {
-		draw_rain_window(original_w, left, right, top, w->y, draw_rain_func);
-
-		top = w->y;
-		draw_rain_window(original_w, left, right, top, bottom, draw_rain_func); 
-		return;
-	}
-
-	sint16 w_bottom = RCT_WINDOW_BOTTOM(w);
-	if (bottom > w_bottom) {
-		draw_rain_window(original_w, left, right, top, w_bottom, draw_rain_func);
-
-		top = w_bottom;
-		draw_rain_window(original_w, left, right, top, bottom, draw_rain_func); 
-		return;
-	}
-}
-
-/**
-*
-*  rct2: 0x00684266
-*/
-void draw_rain_animation(uint32 draw_rain_func)
-{
-	rct_drawpixelinfo *screenDPI = RCT2_ADDRESS(RCT2_ADDRESS_SCREEN_DPI, rct_drawpixelinfo);
-	short left = screenDPI->x;
-	short right = left + screenDPI->width;
-	short top = screenDPI->y;
-	short bottom = top + screenDPI->height;
-
-	rct_window* newWindow = (RCT2_GLOBAL(RCT2_ADDRESS_NEW_WINDOW_PTR, rct_window*));
-
-	for (rct_window* w = g_window_list; w < newWindow; w++) {
-		draw_rain_window(w, left, right, top, bottom, draw_rain_func);
-	}
-}
-
-/**
- * 
- *  rct2: 0x00684218
- */
-void update_rain_animation()
-{
-	if (RCT2_GLOBAL(0x009ABDF2, uint8) == 0)
-		return;
-
-	// Draw picked-up peep
-	if (RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_SPRITE, uint32) != 0xFFFFFFFF) {
-		gfx_draw_sprite(
-			(rct_drawpixelinfo*)RCT2_ADDRESS_SCREEN_DPI,
-			RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_SPRITE, uint32),
-			RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_X, sint16),
-			RCT2_GLOBAL(RCT2_ADDRESS_PICKEDUP_PEEP_Y, sint16), 0
-		);
-	}
-
-	// Get rain draw function and draw rain
-	uint32 draw_rain_func = RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_RAIN_LEVEL, uint8);
-	if (draw_rain_func > 0 && !(RCT2_GLOBAL(0x009DEA6F, uint8) & 1))
-		draw_rain_animation(draw_rain_func);
-}
-
 void game_update()
 {
-	int eax, tmp;
+	int i, numUpdates, tmp;
 
 	// Handles picked-up peep and rain redraw
-	RCT2_CALLPROC_EBPSAFE(0x006843DC);
+	redraw_peep_and_rain();
 
 	// 0x006E3AEC // screen_game_process_mouse_input();
 	// RCT2_CALLPROC_EBPSAFE(0x006E3AEC); // screen_game_process_keyboard_input();
 	screenshot_check();
 	game_handle_keyboard_input();
 
-	// do game logic
-	eax = RCT2_GLOBAL(0x009DE588, uint16) / 31;
-	if (eax == 0)
-		eax = 1;
-	if (eax > 4)
-		eax = 4;
+	// Determine how many times we need to update the game
+	if (gGameSpeed > 1) {
+		numUpdates = 1 << (gGameSpeed - 1);
+	} else {
+		numUpdates = RCT2_GLOBAL(0x009DE588, uint16) / 31;
+		numUpdates = clamp(1, numUpdates, 4);
+	}
 
-	if (gGameSpeed > 1)
-		eax = 1 << (gGameSpeed - 1);
-
+	// Update the game one or more times
 	if (RCT2_GLOBAL(0x009DEA6E, uint8) == 0) {
-		for (; eax > 0; eax--) {
+		for (i = 0; i < numUpdates; i++) {
 			game_logic_update();
-			start_title_music(); //RCT2_CALLPROC_EBPSAFE(0x006BD0F8); // play title screen music
+			start_title_music();
 
-			/*
-			if (rctmem->dword_009E2D74 == 1) {
-			rctmem->dword_009E2D74 = 0;
-			break;
+			if (gGameSpeed > 1)
+				continue;
+
+			// Possibly smooths viewport scrolling, I don't see a difference though
+			if (RCT2_GLOBAL(0x009E2D74, uint32) == 1) {
+				RCT2_GLOBAL(0x009E2D74, uint32) = 0;
+				break;
 			} else {
-			if (rctmem->input_state != INPUT_STATE_WIDGET_RESET && rctmem->input_state != INPUT_STATE_WIDGET_NORMAL)
-			break;
-
-			tmp = rctmem->dword_009DE518 & 0x80;
-			rctmem->dword_009DE518 &= ~0x80;
-			if (tmp)
-			break;
+				if (RCT2_GLOBAL(RCT2_ADDRESS_INPUT_STATE, uint8) == INPUT_STATE_RESET ||
+					RCT2_GLOBAL(RCT2_ADDRESS_INPUT_STATE, uint8) == INPUT_STATE_NORMAL
+				) {
+					if (RCT2_GLOBAL(RCT2_ADDRESS_INPUT_FLAGS, uint32)) {
+						RCT2_GLOBAL(RCT2_ADDRESS_INPUT_FLAGS, uint32) &= ~INPUT_FLAG_VIEWPORT_SCROLLING;
+						break;
+					}
+				} else {
+					break;
+				}
 			}
-			*/
 		}
 	}
 
+	RCT2_GLOBAL(0x009A8C28, uint8) = 0;
 
-	RCT2_GLOBAL(0x009DE518, uint32) &= ~0x80;
-	RCT2_GLOBAL(0x009AC861, uint16) &= ~0x8000;
-	RCT2_GLOBAL(0x009AC861, uint16) &= ~0x02;
-	tmp = RCT2_GLOBAL(0x009AC861, uint16) & 0x01;
-	RCT2_GLOBAL(0x009AC861, uint16) &= ~0x01;
+	RCT2_GLOBAL(RCT2_ADDRESS_INPUT_FLAGS, uint32) &= ~INPUT_FLAG_VIEWPORT_SCROLLING;
+	RCT2_GLOBAL(0x009AC861, uint16) ^= (1 << 15);
+	RCT2_GLOBAL(0x009AC861, uint16) &= ~(1 << 1);
+	tmp = RCT2_GLOBAL(0x009AC861, uint16) & (1 << 0);
+	RCT2_GLOBAL(0x009AC861, uint16) &= ~(1 << 0);
 	if (!tmp)
-		RCT2_GLOBAL(0x009AC861, uint16) |= 0x02;
-	RCT2_GLOBAL(0x009AC861, uint16) &= ~0x08;
-	tmp = RCT2_GLOBAL(0x009AC861, uint16) & 0x04;
-	RCT2_GLOBAL(0x009AC861, uint16) &= ~0x04;
+		RCT2_GLOBAL(0x009AC861, uint16) |= (1 << 1);
+	RCT2_GLOBAL(0x009AC861, uint16) &= ~(1 << 3);
+	tmp = RCT2_GLOBAL(0x009AC861, uint16) & (1 << 2);
+	RCT2_GLOBAL(0x009AC861, uint16) &= ~(1 << 2);
 	if (!tmp)
-		RCT2_GLOBAL(0x009AC861, uint16) |= 0x04;
+		RCT2_GLOBAL(0x009AC861, uint16) |= (1 << 2);
 
-	RCT2_CALLPROC_EBPSAFE(0x006EE77A);
-
+	window_map_tooltip_update_visibility();
 	window_update_all();
 
 	RCT2_GLOBAL(0x01388698, uint16)++;
@@ -488,22 +292,22 @@ void game_logic_update()
 	sub_68B089();
 	scenario_update();
 	climate_update();
-	RCT2_CALLPROC_EBPSAFE(0x006646E1);
-	RCT2_CALLPROC_EBPSAFE(0x006A876D);
+	fountain_update_all();
+	sub_6A876D();
 	peep_update_all();
 	vehicle_update_all();
-	RCT2_CALLPROC_EBPSAFE(0x00672AA4);	// update text effects
-	RCT2_CALLPROC_EBPSAFE(0x006ABE4C);	// update rides
+	texteffect_update_all();
+	ride_update_all();
 	park_update();
 	research_update();
-	RCT2_CALLPROC_EBPSAFE(0x006B5A2A);	// update ride ratings
+	ride_ratings_update_all();
 	ride_measurements_update();
-	RCT2_CALLPROC_EBPSAFE(0x0068AFAD);
-	vehicle_sounds_update();//RCT2_CALLPROC_EBPSAFE(0x006BBC6B);	// vehicle and scream sounds
+	map_invalidate_animations();
+	vehicle_sounds_update();
 	peep_update_crowd_noise();
 	climate_update_sound();
 	news_item_update_current();
-	RCT2_CALLPROC_EBPSAFE(0x0067009A);	// scenario editor opening of windows for a phase
+	editor_open_windows_for_current_step();
 
 	stop_completed_sounds(); // removes other sounds that are no longer playing, this is normally called somewhere in rct2_init
 
@@ -672,7 +476,7 @@ void game_pause_toggle()
 
 	if (input_bl & 1) {
 		RCT2_GLOBAL(0x009DEA6E, uint32) ^= 1;
-		window_invalidate_by_id(WC_TOP_TOOLBAR, 0);
+		window_invalidate_by_class(WC_TOP_TOOLBAR);
 		if (RCT2_GLOBAL(0x009DEA6E, uint32) & 1)
 			pause_sounds();
 		else
@@ -723,23 +527,23 @@ static void game_load_or_quit()
 		window_save_prompt_open();
 		break;
 	case 1:
-		window_close_by_id(WC_SAVE_PROMPT, 0);
+		window_close_by_class(WC_SAVE_PROMPT);
 		break;
 	default:
 		game_load_or_quit_no_save_prompt();
 		break;
 	}
 
-	#ifdef _MSC_VER
+#ifdef _MSC_VER
 	__asm mov ebx, 0
-	#else
+#else
 	__asm__ ( "mov ebx, 0 "  );
-	#endif
+#endif
 
 }
 
 /**
- * 
+ *
  *  rct2: 0x00674F40
  */
 static int open_landscape_file_dialog()
@@ -756,7 +560,7 @@ static int open_landscape_file_dialog()
 }
 
 /**
- * 
+ *
  *  rct2: 0x00674EB6
  */
 static int open_load_game_dialog()
@@ -773,7 +577,7 @@ static int open_load_game_dialog()
 }
 
 /**
- * 
+ *
  *  rct2: 0x0066DC0F
  */
 static void load_landscape()
@@ -794,7 +598,7 @@ static void load_landscape()
 		}
 		strcpy((char*)RCT2_ADDRESS_SAVED_GAMES_PATH_2, (char*)0x0141EF68);
 
-		RCT2_CALLPROC_EBPSAFE(0x006758C0); // landscape_load
+		editor_load_landscape((char*)0x0141EF68);
 		if (1) {
 			gfx_invalidate_screen();
 			rct2_endupdate();
@@ -809,16 +613,19 @@ static void load_landscape()
  * 
  *  rct2: 0x00675E1B
  */
-int game_load_save()
+int game_load_save(const char *path)
 {
 	rct_window *mainWindow;
 	FILE *file;
-	char *path;
 	int i, j;
 
-	path = (char*)0x0141EF68;
+	log_verbose("loading saved game, %s", path);
+
+	strcpy((char*)0x0141EF68, path);
 	file = fopen(path, "rb");
 	if (file == NULL) {
+		log_error("unable to open %s", path);
+
 		RCT2_GLOBAL(0x009AC31B, uint8) = 255;
 		RCT2_GLOBAL(RCT2_ADDRESS_GAME_COMMAND_ERROR_STRING_ID, uint16) = STR_FILE_CONTAINS_INVALID_DATA;
 		return 0;
@@ -826,6 +633,9 @@ int game_load_save()
 
 	if (!sawyercoding_validate_checksum(file)) {
 		fclose(file);
+
+		log_error("invalid checksum, %s", path);
+
 		RCT2_GLOBAL(0x009AC31B, uint8) = 255;
 		RCT2_GLOBAL(RCT2_ADDRESS_GAME_COMMAND_ERROR_STRING_ID, uint16) = STR_FILE_CONTAINS_INVALID_DATA;
 		return 0;
@@ -847,12 +657,7 @@ int game_load_save()
 		}
 	}
 
-	if (!object_read_and_load_entries(file)){
-		fclose(file);
-		RCT2_GLOBAL(0x009AC31B, uint8) = 255;
-		RCT2_GLOBAL(RCT2_ADDRESS_GAME_COMMAND_ERROR_STRING_ID, uint16) = STR_FILE_CONTAINS_INVALID_DATA;
-		return 0;
-	};
+	uint8 load_success = object_read_and_load_entries(file);
 
 	// Read flags (16 bytes)
 	sawyercoding_read_chunk(file, (uint8*)RCT2_ADDRESS_CURRENT_MONTH_YEAR);
@@ -868,6 +673,19 @@ int game_load_save()
 
 	// Check expansion pack
 	// RCT2_CALLPROC_EBPSAFE(0x006757E6);
+
+	if (!load_success){
+		set_load_objects_fail_reason();
+		if (RCT2_GLOBAL(0x9DE518,uint32) & (1<<5)){
+			RCT2_GLOBAL(0x14241BC, uint32) = 2;
+			//call 0x0040705E Sets cursor position and something else. Calls maybe wind func 8 probably pointless
+			RCT2_GLOBAL(0x14241BC, uint32) = 0;
+			RCT2_GLOBAL(0x9DE518, uint32) &= ~(1<<5);
+		}
+		title_load();
+		rct2_endupdate();
+		return 0;//This never gets called
+	}
 
 	// The rest is the same as in scenario load and play
 	RCT2_CALLPROC_EBPSAFE(0x006A9FC0);
@@ -898,7 +716,7 @@ int game_load_save()
 	mainWindow->saved_view_y -= mainWindow->viewport->view_height >> 1;
 	window_invalidate(mainWindow);
 
-	sub_0x0069E9A7(); 
+	sub_69E9A7(); 
 	RCT2_CALLPROC_EBPSAFE(0x006DFEE4);
 	window_new_ride_init_vars();
 	RCT2_GLOBAL(0x009DEB7C, uint16) = 0;
@@ -914,14 +732,11 @@ int game_load_save()
  *
  * rct2: 0x0069E9A7
  */
-void sub_0x0069E9A7(){
-	//RCT2_CALLPROC_EBPSAFE(0x0069E9A7);
-	//return;
-	for (rct_sprite* spr = g_sprite_list; spr < (rct_sprite*)RCT2_ADDRESS_SPRITES_NEXT_INDEX; ++spr){
-		if (spr->unknown.sprite_identifier != 0xFF){
-			RCT2_CALLPROC_X(0x0069E9D3, spr->unknown.x, 0, spr->unknown.y, spr->unknown.z, (int)spr, 0, 0);
-		}
-	}
+void sub_69E9A7()
+{
+	for (rct_sprite* spr = g_sprite_list; spr < (rct_sprite*)RCT2_ADDRESS_SPRITES_NEXT_INDEX; spr++)
+		if (spr->unknown.sprite_identifier != 0xFF)
+			sprite_move(spr->unknown.x, spr->unknown.y, spr->unknown.z, spr);
 }
 
 /**
@@ -946,7 +761,7 @@ static void load_game()
 		}
 		strcpy((char*)RCT2_ADDRESS_SAVED_GAMES_PATH_2, (char*)0x0141EF68);
 
-		if (game_load_save()) {
+		if (game_load_save((char *)0x0141EF68)) {
 			gfx_invalidate_screen();
 			rct2_endupdate();
 		} else {
@@ -956,33 +771,51 @@ static void load_game()
 	}
 }
 
+/**
+ *
+ *  rct2: 0x006750E9
+ */
+static int show_save_game_dialog(char *resultPath)
+{
+	rct_s6_info *s6Info = (rct_s6_info*)0x0141F570;
+
+	int result;
+	char title[256];
+	char filename[MAX_PATH];
+	char filterName[256];
+
+	format_string(title, STR_SAVE_GAME_1040, NULL);
+	strcpy(filename, RCT2_ADDRESS(RCT2_ADDRESS_SAVED_GAMES_PATH_2, char));
+	format_string(filterName, STR_RCT2_SAVED_GAME, NULL);
+
+	pause_sounds();
+	result = osinterface_open_common_file_dialog(0, title, filename, "*.SV6", filterName);
+	unpause_sounds();
+
+	if (result)
+		strcpy(resultPath, filename);
+	return result;
+}
+
 char save_game()
 {
-	int eax, ebx, ecx, edx, esi, edi, ebp;
-	RCT2_CALLFUNC_X(0x006750E9, &eax, &ebx, &ecx, &edx, &esi, &edi, &ebp);
-	if (eax == 0) {
-		// user pressed "cancel"
+	char path[256];
+
+	if (!show_save_game_dialog(path)) {
 		gfx_invalidate_screen();
 		return 0;
 	}
-	
-	char *src = (char*)0x0141EF67;
-	do {
-		src++;
-	} while (*src != '.' && *src != '\0');
-	strcpy(src, ".SV6");
-	strcpy((char*) RCT2_ADDRESS_SAVED_GAMES_PATH_2, (char*) 0x0141EF68);
-	
-	eax = 0;
-	if (RCT2_GLOBAL(RCT2_ADDRESS_CONFIG_FLAGS, uint8) & 8)
-		eax |= 1;
-	RCT2_CALLPROC_X(0x006754F5, eax, 0, 0, 0, 0, 0, 0);
-	// check success?
 
-	game_do_command(0, 1047, 0, -1, GAME_COMMAND_0, 0, 0);
-	gfx_invalidate_screen();
+	// Ensure path has .SV6 extension
+	path_set_extension(path, ".SV6");
 	
-	return 1;
+	if (scenario_save(path, gGeneral_config.save_plugin_data ? 1 : 0)) {
+		game_do_command(0, 1047, 0, -1, GAME_COMMAND_0, 0, 0);
+		gfx_invalidate_screen();
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 /**
@@ -1010,9 +843,9 @@ void game_load_or_quit_no_save_prompt()
 			load_game();
 	} else if (RCT2_GLOBAL(RCT2_ADDRESS_SAVE_PROMPT_MODE, uint16) == 1) {
 		game_do_command(0, 1, 0, 1, GAME_COMMAND_LOAD_OR_QUIT, 0, 0);
-		if (RCT2_GLOBAL(0x009DE518, uint32) & (1 << 5)) {
+		if (RCT2_GLOBAL(RCT2_ADDRESS_INPUT_FLAGS, uint32) & INPUT_FLAG_5) {
 			RCT2_CALLPROC_EBPSAFE(0x0040705E);
-			RCT2_GLOBAL(0x009DE518, uint32) &= ~(1 << 5);
+			RCT2_GLOBAL(RCT2_ADDRESS_INPUT_FLAGS, uint32) &= ~INPUT_FLAG_5;
 		}
 		title_load();
 		rct2_endupdate();
@@ -1081,7 +914,7 @@ static uint32 game_do_command_table[58] = {
 	0x006B909A,
 	0x006BA16A,
 	0x006648E3,
-	0x0068DF91
+	0
 };
 
 void game_command_emptysub(int* eax, int* ebx, int* ecx, int* edx, int* esi, int* edi, int* ebp) {}
@@ -1144,7 +977,7 @@ static GAME_COMMAND_POINTER* new_game_command_table[58] = {
 	game_command_emptysub,
 	game_command_emptysub,
 	game_command_emptysub,
-	game_command_emptysub
+	game_command_clear_scenery
 };
 
 #pragma endregion

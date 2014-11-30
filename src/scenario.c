@@ -18,52 +18,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
-#include <windows.h>
-#include <string.h>
 #include "addresses.h"
-#include "award.h"
-#include "date.h"
-#include "finance.h"
 #include "game.h"
-#include "map.h"
-#include "marketing.h"
-#include "news_item.h"
+#include "interface/viewport.h"
+#include "localisation/date.h"
+#include "localisation/localisation.h"
+#include "management/award.h"
+#include "management/finance.h"
+#include "management/marketing.h"
+#include "management/research.h"
+#include "management/news_item.h"
 #include "object.h"
-#include "park.h"
-#include "rct2.h"
-#include "ride.h"
-#include "sawyercoding.h"
+#include "platform/platform.h"
+#include "ride/ride.h"
 #include "scenario.h"
-#include "string_ids.h"
-#include "sprite.h"
-#include "viewport.h"
+#include "title.h"
+#include "util/sawyercoding.h"
+#include "util/util.h"
+#include "world/map.h"
+#include "world/park.h"
+#include "world/sprite.h"
 
 /**
  * Loads only the basic information from a scenario.
  *  rct2: 0x006761D6
  */
-int scenario_load_basic(const char *path)
+int scenario_load_basic(const char *path, rct_s6_header *header, rct_s6_info *info)
 {
 	FILE *file;
-	rct_s6_header *s6Header = (rct_s6_header*)0x009E34E4;
-	rct_s6_info *s6Info = (rct_s6_info*)0x0141F570;
+
+	log_verbose("loading scenario details, %s", path);
 
 	file = fopen(path, "rb");
 	if (file != NULL) {
 		// Read first chunk
-		sawyercoding_read_chunk(file, (uint8*)s6Header);
-		if (s6Header->type == S6_TYPE_SCENARIO) {
+		sawyercoding_read_chunk(file, (uint8*)header);
+		if (header->type == S6_TYPE_SCENARIO) {
 			// Read second chunk
-			sawyercoding_read_chunk(file, (uint8*)s6Info);
+			sawyercoding_read_chunk(file, (uint8*)info);
 			fclose(file);
 			RCT2_GLOBAL(0x009AA00C, uint8) = 0;
 
 			// Checks for a scenario string object (possibly for localisation)
-			if ((s6Info->entry.flags & 0xFF) != 255) {
-				if (object_get_scenario_text(&s6Info->entry)) {
+			if ((info->entry.flags & 0xFF) != 255) {
+				if (object_get_scenario_text(&info->entry)) {
 					int ebp = RCT2_GLOBAL(0x009ADAF8, uint32);
-					format_string(s6Info->name, RCT2_GLOBAL(ebp, sint16), NULL);
-					format_string(s6Info->details, RCT2_GLOBAL(ebp + 4, sint16), NULL);
+					format_string(info->name, RCT2_GLOBAL(ebp, sint16), NULL);
+					format_string(info->details, RCT2_GLOBAL(ebp + 4, sint16), NULL);
 					RCT2_GLOBAL(0x009AA00C, uint8) = RCT2_GLOBAL(ebp + 6, uint8);
 					object_free_scenario_text();
 				}
@@ -73,8 +74,9 @@ int scenario_load_basic(const char *path)
 		fclose(file);
 	}
 
-	RCT2_GLOBAL(0x009AC31B, sint8) = -1;
-	RCT2_GLOBAL(0x009AC31C, sint16) = 3011;
+	log_error("invalid scenario, %s", path);
+	// RCT2_GLOBAL(0x009AC31B, sint8) = -1;
+	// RCT2_GLOBAL(0x009AC31C, sint16) = 3011;
 	return 0;
 }
 
@@ -83,8 +85,10 @@ int scenario_load_basic(const char *path)
  *  rct2: 0x00676053
  * scenario (ebx)
  */
-void scenario_load(const char *path)
+int scenario_load(const char *path)
 {
+	log_verbose("loading scenario, %s", path);
+
 	FILE *file;
 	int i, j;
 	rct_s6_header *s6Header = (rct_s6_header*)0x009E34E4;
@@ -96,7 +100,9 @@ void scenario_load(const char *path)
 			fclose(file);
 			RCT2_GLOBAL(0x009AC31B, uint8) = 255;
 			RCT2_GLOBAL(0x009AC31C, uint16) = STR_FILE_CONTAINS_INVALID_DATA;
-			return;
+
+			log_error("failed to load scenario, invalid checksum");
+			return 0;
 		}
 
 		// Read first chunk
@@ -114,7 +120,7 @@ void scenario_load(const char *path)
 					object_list_load();
 			}
 
-			object_read_and_load_entries(file);
+			uint8 load_success = object_read_and_load_entries(file);
 
 			// Read flags (16 bytes). Loads:
 			//	RCT2_ADDRESS_CURRENT_MONTH_YEAR
@@ -151,21 +157,27 @@ void scenario_load(const char *path)
 			sawyercoding_read_chunk(file, (uint8*)RCT2_ADDRESS_COMPLETED_COMPANY_VALUE);
 
 			fclose(file);
-
+			if (!load_success){
+				log_error("failed to load all entries.");
+				set_load_objects_fail_reason();
+				return 0;
+			}
 			// Check expansion pack
 			// RCT2_CALLPROC_EBPSAFE(0x006757E6);
 
 			RCT2_CALLPROC_EBPSAFE(0x006A9FC0);
 			map_update_tile_pointers();
 			reset_0x69EBE4();// RCT2_CALLPROC_EBPSAFE(0x0069EBE4);
-			return;
+			return 1;
 		}
 
 		fclose(file);
 	}
 
+	log_error("failed to find scenario file.");
 	RCT2_GLOBAL(0x009AC31B, uint8) = 255;
 	RCT2_GLOBAL(0x009AC31C, uint16) = STR_FILE_CONTAINS_INVALID_DATA;
+	return 0;
 }
 
 /**
@@ -173,24 +185,31 @@ void scenario_load(const char *path)
  *  rct2: 0x00678282
  * scenario (ebx)
  */
-void scenario_load_and_play(const rct_scenario_basic *scenario)
+int scenario_load_and_play(const rct_scenario_basic *scenario)
+{
+	char path[MAX_PATH];
+
+	subsitute_path(path, RCT2_ADDRESS(RCT2_ADDRESS_SCENARIOS_PATH, char), scenario->path);
+	return scenario_load_and_play_from_path(path);
+}
+
+int scenario_load_and_play_from_path(const char *path)
 {
 	rct_window *mainWindow;
 	rct_s6_info *s6Info = (rct_s6_info*)0x0141F570;
 
 	// Create the scenario pseduo-random seeds using the current time
 	uint32 srand0, srand1;
-	srand0 = RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_0, uint32) ^ timeGetTime();
-	srand1 = RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_1, uint32) ^ timeGetTime();
+	srand0 = RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_0, uint32) ^ platform_get_ticks();
+	srand1 = RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_1, uint32) ^ platform_get_ticks();
 
 	window_close_construction_windows();
 
-	subsitute_path(
-		RCT2_ADDRESS(0x0141EF68, char),
-		RCT2_ADDRESS(RCT2_ADDRESS_SCENARIOS_PATH, char),
-		scenario->path
-	);
-	scenario_load((char*)0x0141EF68);
+	if (!scenario_load(path))
+		return 0;
+
+	log_verbose("starting scenario, %s", path);
+
 	RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) = SCREEN_FLAGS_PLAYING;
 	viewport_init_all();
 	game_create_windows();
@@ -217,7 +236,7 @@ void scenario_load_and_play(const rct_scenario_basic *scenario)
 	mainWindow->saved_view_y -= mainWindow->viewport->view_height >> 1;
 	window_invalidate(mainWindow);
 
-	sub_0x0069E9A7();// RCT2_CALLPROC_EBPSAFE(0x0069E9A7);
+	sub_69E9A7();
 	window_new_ride_init_vars();
 
 	// Set the scenario pseduo-random seeds
@@ -228,7 +247,7 @@ void scenario_load_and_play(const rct_scenario_basic *scenario)
 	RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, sint32) &= 0xFFFFF7FF;
 	if (RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, sint32) & PARK_FLAGS_NO_MONEY_SCENARIO)
 		RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, sint32) |= PARK_FLAGS_NO_MONEY;
-	RCT2_CALLPROC_EBPSAFE(0x00684AC3);
+	sub_684AC3();
 	RCT2_CALLPROC_EBPSAFE(0x006DFEE4);
 	news_item_init_queue();
 	if (RCT2_GLOBAL(RCT2_ADDRESS_OBJECTIVE_TYPE, uint8) != OBJECTIVE_NONE)
@@ -313,13 +332,15 @@ void scenario_load_and_play(const rct_scenario_basic *scenario)
 	gfx_invalidate_screen();
 	RCT2_GLOBAL(0x009DEA66, uint16) = 0;
 	RCT2_GLOBAL(0x009DEA5C, uint16) = 62000; // (doesn't appear to ever be read)
+
+	return 1;
 }
 
 
 void scenario_end()
 {
 	rct_window* w;
-	window_close_by_id(WC_DROPDOWN, 0);
+	window_close_by_class(WC_DROPDOWN);
 	
 	for (w = g_window_list; w < RCT2_GLOBAL(RCT2_ADDRESS_NEW_WINDOW_PTR, rct_window*); w++){
 		if (!(w->flags & (WF_STICK_TO_BACK | WF_STICK_TO_FRONT)))
@@ -357,7 +378,7 @@ void scenario_success()
 			if (scenario->flags & SCENARIO_FLAGS_COMPLETED && scenario->company_value < current_val)
 				break; // not a new high score -> no glory
 
-			// bts game_flags, 1 happens here but I don't know what for
+			RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, uint32) |= PARK_FLAGS_SCENARIO_COMPLETE_NAME_INPUT;
 			scenario->company_value = current_val;
 			scenario->flags |= SCENARIO_FLAGS_COMPLETED;
 			scenario->completed_by[0] = 0;
@@ -498,13 +519,17 @@ void scenario_objectives_check()
 
 	case OBJECTIVE_FINISH_5_ROLLERCOASTERS://9
 	{
+		int i;
 		rct_ride* ride;
+
+		// ORIGINAL BUG?:
+		// This does not check if the rides are even rollercoasters nevermind the right rollercoasters to be finished.
+		// It also did not exclude null rides.
 		int rcs = 0;
-		for (int i = 0; i < MAX_RIDES; i++) {
-			ride = &g_ride_list[i];
+		FOR_ALL_RIDES(i, ride)
 			if (ride->status != RIDE_STATUS_CLOSED && ride->excitement >= objective_currency)
 				rcs++;
-		}
+
 		if (rcs >= 5)
 			scenario_success();
 		break;
@@ -580,7 +605,7 @@ void scenario_update()
 			scenario_objectives_check();
 		}
 
-		window_invalidate_by_id(WC_BOTTOM_TOOLBAR, 0);
+		window_invalidate_by_class(WC_BOTTOM_TOOLBAR);
 	}
 
 	
@@ -638,9 +663,379 @@ void scenario_update()
 *
 *  rct2: 0x006E37D2
 */
-int scenario_rand()
+unsigned int scenario_rand()
 {
 	int eax = RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_0, uint32);
 	RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_0, uint32) += ror32(RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_1, uint32) ^ 0x1234567F, 7);
 	return RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_1, uint32) = ror32(eax, 3);
+}
+
+/**
+ * Prepare rides, for the finish five rollercoasters objective.
+ *  rct2: 0x006788F7
+ */
+void scenario_prepare_rides_for_save()
+{
+	int i, x, y;
+	rct_map_element *mapElement;
+	rct_ride *ride;
+
+	int isFiveCoasterObjective = RCT2_GLOBAL(RCT2_ADDRESS_OBJECTIVE_TYPE, uint8) == OBJECTIVE_FINISH_5_ROLLERCOASTERS;
+
+	// Set all existing track to be indestructible
+	for (y = 0; y < 256; y++) {
+		for (x = 0; x < 256; x++) {
+			mapElement = TILE_MAP_ELEMENT_POINTER(y * 256 + x);
+			do {
+				if ((mapElement->type & MAP_ELEMENT_TYPE_MASK) == MAP_ELEMENT_TYPE_TRACK) {
+					if (isFiveCoasterObjective)
+						mapElement->flags |= 0x40;
+					else
+						mapElement->flags &= ~0x40;
+				}
+			} while (!((mapElement++)->flags & MAP_ELEMENT_FLAG_LAST_TILE));
+		}
+	}
+
+	// Set all existing rides to have indestructible track
+	FOR_ALL_RIDES(i, ride) {
+		if (isFiveCoasterObjective)
+			ride->lifecycle_flags |= RIDE_LIFECYCLE_INDESTRUCTIBLE_TRACK;
+		else
+			ride->lifecycle_flags &= ~RIDE_LIFECYCLE_INDESTRUCTIBLE_TRACK;
+	}
+}
+
+/**
+ *
+ *  rct2: 0x006726C7
+ */
+int scenario_prepare_for_save()
+{
+	rct_s6_info *s6Info = (rct_s6_info*)0x0141F570;
+	char buffer[256];
+
+	s6Info->entry.flags = 255;
+
+	char *stex = RCT2_GLOBAL(0x009ADAE4, char*);
+	if (stex != (char*)0xFFFFFFFF) {
+		format_string(buffer, RCT2_GLOBAL(stex, uint16), NULL);
+		strncpy(s6Info->name, buffer, sizeof(s6Info->name));
+		s6Info->entry = *((rct_object_entry*)0x00F4287C);
+	}
+
+	if (s6Info->name[0] == 0)
+		format_string(s6Info->name, RCT2_GLOBAL(0x013573D4, rct_string_id), (void*)0x013573D8);
+
+	s6Info->objective_type = RCT2_GLOBAL(RCT2_ADDRESS_OBJECTIVE_TYPE, uint8);
+	s6Info->objective_arg_1 = RCT2_GLOBAL(RCT2_ADDRESS_OBJECTIVE_YEAR, uint8);
+	s6Info->objective_arg_2 = RCT2_GLOBAL(RCT2_ADDRESS_OBJECTIVE_CURRENCY, uint8);
+	s6Info->objective_arg_3 = RCT2_GLOBAL(RCT2_ADDRESS_OBJECTIVE_NUM_GUESTS, uint8);
+
+	scenario_prepare_rides_for_save();
+
+	if (RCT2_GLOBAL(RCT2_ADDRESS_OBJECTIVE_TYPE, uint8) == OBJECTIVE_GUESTS_AND_RATING)
+		RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, uint32) |= PARK_FLAGS_PARK_OPEN;
+
+	return 1;
+}
+
+/**
+ *
+ *  rct2: 0x006AA244
+ */
+int scenario_get_num_packed_objects_to_write()
+{
+	int i, count = 0;
+	rct_object_entry_extended *entry = (rct_object_entry_extended*)0x00F3F03C;
+
+	for (i = 0; i < 721; i++, entry++) {
+		if (RCT2_ADDRESS(0x009ACFA4, uint32)[i] == 0xFFFFFFFF || (entry->flags & 0xF0))
+			continue;
+
+		count++;
+	}
+
+	return count;
+}
+
+/**
+ *
+ *  rct2: 0x006AA26E
+ */
+int scenario_write_packed_objects(FILE *file)
+{
+	int i;
+	rct_object_entry_extended *entry = (rct_object_entry_extended*)0x00F3F03C;
+	for (i = 0; i < 721; i++, entry++) {
+		if (RCT2_ADDRESS(0x009ACFA4, uint32)[i] == 0xFFFFFFFF || (entry->flags & 0xF0))
+			continue;
+
+		if (!sub_6A9F42(file, (rct_object_entry*)entry))
+			return 0;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ *  rct2: 0x006AA039
+ */
+int scenario_write_available_objects(FILE *file)
+{
+	char *buffer, *dstBuffer;
+	int i, encodedLength;
+	sawyercoding_chunk_header chunkHeader;
+
+	const int totalEntries = 721;
+	const int bufferLength = totalEntries * sizeof(rct_object_entry);
+
+	// Initialise buffers
+	buffer = malloc(bufferLength);
+	dstBuffer = malloc(bufferLength + sizeof(sawyercoding_chunk_header));
+	if (buffer == NULL || dstBuffer == NULL)
+		return 0;
+
+	// Write entries
+	rct_object_entry_extended *srcEntry = (rct_object_entry_extended*)0x00F3F03C;
+	rct_object_entry *dstEntry = (rct_object_entry*)buffer;
+	for (i = 0; i < 721; i++) {
+		if (RCT2_ADDRESS(0x009ACFA4, uint32)[i] == 0xFFFFFFFF)
+			memset(dstEntry, 0xFF, sizeof(rct_object_entry));
+		else
+			*dstEntry = *((rct_object_entry*)srcEntry);
+		
+		srcEntry++;
+		dstEntry++;
+	}
+
+	// Write chunk
+	chunkHeader.encoding = CHUNK_ENCODING_ROTATE;
+	chunkHeader.length = bufferLength;
+	encodedLength = sawyercoding_write_chunk_buffer(dstBuffer, buffer, chunkHeader);
+	fwrite(dstBuffer, encodedLength, 1, file);
+
+	// Free buffers
+	free(dstBuffer);
+	free(buffer);
+}
+
+/**
+ *
+ *  rct2: 0x006754F5
+ * @param flags bit 0: pack objects, 1: save as scenario
+ */
+int scenario_save(char *path, int flags)
+{
+	rct_s6_header *s6Header = (rct_s6_header*)0x009E34E4;
+	rct_s6_info *s6Info = (rct_s6_info*)0x0141F570;
+
+	FILE *file;
+	char *buffer;
+	sawyercoding_chunk_header chunkHeader;
+	int encodedLength;
+	long fileSize;
+	uint32 checksum;
+
+	rct_window *w;
+	rct_viewport *viewport;
+	int viewX, viewY, viewZoom, viewRotation;
+
+	if (flags & 2)
+		log_verbose("saving scenario, %s", path);
+	else
+		log_verbose("saving game, %s", path);
+
+
+	if (!(flags & 0x80000000))
+		window_close_construction_windows();
+
+	RCT2_CALLPROC_EBPSAFE(0x0068B111);
+	RCT2_CALLPROC_EBPSAFE(0x0069EBE4);
+	RCT2_CALLPROC_EBPSAFE(0x0069EBA4);
+	RCT2_CALLPROC_EBPSAFE(0x00677552);
+	RCT2_CALLPROC_EBPSAFE(0x00674BCF);
+
+	// Set saved view
+	w = window_get_main();
+	if (w != NULL) {
+		viewport = w->viewport;
+
+		viewX = viewport->view_width / 2 + viewport->view_x;
+		viewY = viewport->view_height / 2 + viewport->view_y;
+		viewZoom = viewport->zoom;
+		viewRotation = RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, uint8);
+	} else {
+		viewX = 0;
+		viewY = 0;
+		viewZoom = 0;
+		viewRotation = 0;
+	}
+
+	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_X, uint16) = viewX;
+	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_Y, uint16) = viewY;
+	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint16) = viewZoom | (viewRotation << 8);
+
+	// 
+	memset(s6Header, 0, sizeof(rct_s6_header));
+	s6Header->type = flags & 2 ? S6_TYPE_SCENARIO : S6_TYPE_SAVEDGAME;
+	s6Header->num_packed_objects = flags & 1 ? scenario_get_num_packed_objects_to_write() : 0;
+	s6Header->version = S6_RCT2_VERSION;
+	s6Header->magic_number = S6_MAGIC_NUMBER;
+
+	file = fopen(path, "wb+");
+	if (file == NULL) {
+		log_error("Unable to write to %s", path);
+		return 0;
+	}
+
+	buffer = malloc(0x600000);
+	if (buffer == NULL) {
+		log_error("Unable to allocate enough space for a write buffer.");
+		fclose(file);
+		return 0;
+	}
+
+	// Write header chunk
+	chunkHeader.encoding = CHUNK_ENCODING_ROTATE;
+	chunkHeader.length = sizeof(rct_s6_header);
+	encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)s6Header, chunkHeader);
+	fwrite(buffer, encodedLength, 1, file);
+
+	// Write scenario info chunk
+	if (flags & 2) {
+		chunkHeader.encoding = CHUNK_ENCODING_ROTATE;
+		chunkHeader.length = sizeof(rct_s6_info);
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)s6Info, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+	}
+
+	// Write packed objects
+	if (s6Header->num_packed_objects > 0) {
+		if (!scenario_write_packed_objects(file)) {
+			free(buffer);
+			fclose(file);
+			return 0;
+		}
+	}
+
+	// Write available objects chunk
+	scenario_write_available_objects(file);
+
+	// Write date etc. chunk
+	chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+	chunkHeader.length = 16;
+	encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x00F663A8, chunkHeader);
+	fwrite(buffer, encodedLength, 1, file);
+
+	// Write map elements
+	chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+	chunkHeader.length = 0x4A85EC;
+	encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x00F663B8, chunkHeader);
+	fwrite(buffer, encodedLength, 1, file);
+
+	if (flags & 2) {
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 0x27104C;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x010E63B8, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 4;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x01357844, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 8;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x01357BC8, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 2;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x01357CB0, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 1082;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x01357CF2, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 16;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x0135832C, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 4;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x0135853C, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 0x761E8;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x01358740, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+	} else {
+		// Write chunk
+		chunkHeader.encoding = CHUNK_ENCODING_RLECOMPRESSED;
+		chunkHeader.length = 0x2E8570;
+		encodedLength = sawyercoding_write_chunk_buffer(buffer, (uint8*)0x010E63B8, chunkHeader);
+		fwrite(buffer, encodedLength, 1, file);
+	}
+
+	free(buffer);
+
+	// Determine number of bytes written
+	fileSize = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	// Read all written bytes back into a single buffer
+	buffer = malloc(fileSize);
+	fread(buffer, fileSize, 1, file);
+	checksum = sawyercoding_calculate_checksum(buffer, fileSize);
+	free(buffer);
+
+	// Append the checksum
+	fseek(file, fileSize, SEEK_SET);
+	fwrite(&checksum, sizeof(uint32), 1, file);
+	fclose(file);
+
+	if (!(flags & 0x80000000))
+		RCT2_CALLPROC_EBPSAFE(0x006A9FC0);
+
+	gfx_invalidate_screen();
+	RCT2_GLOBAL(0x009DEA66, uint16) = 0;
+	return 1;
+}
+
+void scenario_success_submit_name(const char *name)
+{
+	int i;
+	rct_scenario_basic* scenario;
+	uint32 scenarioWinCompanyValue;
+	
+	for (i = 0; i < gScenarioListCount; i++) {
+		char *cur_scenario_name = RCT2_ADDRESS(0x135936C, char);
+		scenario = &gScenarioList[i];
+
+		if (strncmp(cur_scenario_name, scenario->path, 256) == 0) {
+			scenarioWinCompanyValue = RCT2_GLOBAL(0x013587C0, uint32);
+			if (scenario->company_value == scenarioWinCompanyValue) {
+				strncpy(scenario->completed_by, name, 64);
+				strncpy((char*)0x013587D8, name, 32);
+				scenario_scores_save();
+			}
+			break;
+		}
+	}
+	
+	RCT2_GLOBAL(RCT2_ADDRESS_PARK_FLAGS, uint32) &= ~PARK_FLAGS_SCENARIO_COMPLETE_NAME_INPUT;
 }

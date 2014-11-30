@@ -18,27 +18,26 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
-#include <windows.h>
-#include <string.h>
-#include <time.h>
 #include "addresses.h"
-#include "audio.h"
+#include "audio/audio.h"
 #include "config.h"
-#include "climate.h"
-#include "date.h"
-#include "game.h"
-#include "gfx.h"
-#include "intro.h"
-#include "map.h"
-#include "news_item.h"
-#include "park.h"
-#include "rct2.h"
-#include "ride.h"
-#include "scenario.h"
-#include "sprite.h"
-#include "string_ids.h"
-#include "viewport.h"
+#include "drawing/drawing.h"
 #include "editor.h"
+#include "game.h"
+#include "input.h"
+#include "localisation/date.h"
+#include "localisation/localisation.h"
+#include "interface/screenshot.h"
+#include "interface/viewport.h"
+#include "intro.h"
+#include "management/news_item.h"
+#include "management/research.h"
+#include "ride/ride.h"
+#include "scenario.h"
+#include "world/climate.h"
+#include "world/map.h"
+#include "world/park.h"
+#include "world/sprite.h"
 
 static const int gOldMusic = 0;
 static const int gRandomShowcase = 0;
@@ -97,7 +96,7 @@ void title_load()
 	RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_FLAGS, uint8) = SCREEN_FLAGS_TITLE_DEMO;
 
 	reset_park_entrances();
-	reset_saved_strings();
+	user_string_clear_all();
 	reset_sprite_list();
 	ride_init_all();
 	window_guest_list_init_vars_a();
@@ -109,7 +108,7 @@ void title_load()
 	RCT2_CALLPROC_EBPSAFE(0x006DFEE4);
 	window_new_ride_init_vars();
 	window_guest_list_init_vars_b();
-	window_staff_init_vars();
+	window_staff_list_init_vars();
 	map_update_tile_pointers(); //RCT2_CALLPROC_EBPSAFE(0x0068AFFD);
 	reset_0x69EBE4();// RCT2_CALLPROC_EBPSAFE(0x0069EBE4);
 	viewport_init_all();
@@ -168,7 +167,10 @@ static void title_update_showcase()
 				_scriptWaitCounter = (*_currentScript++) * 32;
 				break;
 			case TITLE_SCRIPT_LOAD:
-				scenario_load(get_file_path(PATH_ID_SIXFLAGS_MAGICMOUNTAIN));
+				if (!scenario_load(get_file_path(PATH_ID_SIXFLAGS_MAGICMOUNTAIN))) {
+					log_fatal("OpenRCT2 can not currently cope when unable to load title screen scenario.");
+					exit(-1);
+				}
 
 				w = window_get_main();
 				w->viewport_target_sprite = -1;
@@ -194,9 +196,9 @@ static void title_update_showcase()
 				}
 
 				window_invalidate(w);
-				sub_0x0069E9A7();// RCT2_CALLPROC_EBPSAFE(0x0069E9A7);
+				sub_69E9A7();
 				window_new_ride_init_vars();
-				RCT2_CALLPROC_EBPSAFE(0x00684AC3);
+				sub_684AC3();
 				RCT2_CALLPROC_EBPSAFE(0x006DFEE4);
 				news_item_init_queue();
 				gfx_invalidate_screen();
@@ -259,13 +261,16 @@ void title_update()
 {
 	int tmp;
 
+	screenshot_check();
+	title_handle_keyboard_input();
+
 	if (RCT2_GLOBAL(0x009DEA6E, uint8) == 0) {
 		title_update_showcase();
 		game_logic_update();
 		start_title_music();//title_play_music();
 	}
 
-	RCT2_GLOBAL(0x009DE518, uint32) &= ~0x80;
+	RCT2_GLOBAL(RCT2_ADDRESS_INPUT_FLAGS, uint32) &= ~0x80;
 	RCT2_GLOBAL(0x009AC861, uint16) &= ~0x8000;
 	RCT2_GLOBAL(0x009AC861, uint16) &= ~0x02;
 	tmp = RCT2_GLOBAL(0x009AC861, uint16) & 0x01;
@@ -278,8 +283,7 @@ void title_update()
 	if (!tmp)
 		RCT2_GLOBAL(0x009AC861, uint16) |= 0x04;
 
-	RCT2_CALLPROC_EBPSAFE(0x006EE77A);
-
+	window_map_tooltip_update_visibility();
 	window_update_all();
 	DrawOpenRCT2(0, RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_HEIGHT, uint16) - 20);
 

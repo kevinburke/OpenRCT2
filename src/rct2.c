@@ -20,144 +20,69 @@
 
 #pragma warning(disable : 4996) // GetVersionExA deprecated
 
-#include <string.h>
 #include <setjmp.h>
-#ifdef _MSC_VER
-#include <time.h>
-#endif
-#include <windows.h>
-#include <shlobj.h>
-#include <SDL.h>
 #include "addresses.h"
-#include "audio.h"
-#include "climate.h"
+#include "audio/audio.h"
+#include "audio/mixer.h"
 #include "config.h"
-#include "date.h"
+#include "drawing/drawing.h"
 #include "editor.h"
 #include "game.h"
-#include "gfx.h"
+#include "interface/viewport.h"
 #include "intro.h"
-#include "language.h"
-#include "map.h"
-#include "mixer.h"
-#include "news_item.h"
+#include "localisation/date.h"
+#include "localisation/localisation.h"
+#include "management/news_item.h"
 #include "object.h"
-#include "osinterface.h"
-#include "park.h"
-#include "rct2.h"
-#include "ride.h"
+#include "openrct2.h"
+#include "platform/osinterface.h"
+#include "platform/platform.h"
+#include "ride/ride.h"
+#include "ride/track.h"
 #include "scenario.h"
 #include "title.h"
-#include "track.h"
-#include "viewport.h"
-#include "sprite.h"
-#include "string_ids.h"
+#include "world/map.h"
+#include "world/park.h"
+#include "world/climate.h"
+#include "world/sprite.h"
 
 typedef struct tm tm_t;
 
 void print_launch_information();
 
-void rct2_init_directories();
-void rct2_startup_checks();
+int rct2_init_directories();
+int rct2_startup_checks();
 
-
-static void rct2_init();
-static void rct2_loop();
-static void rct2_update();
 static void rct2_update_2();
 
-static int _finished;
 static jmp_buf _end_update_jump;
-
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
-{
-	return TRUE;
-}
-
-__declspec(dllexport) int StartOpenRCT(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-{
-	print_launch_information();
-
-	// Begin RCT2
-	RCT2_GLOBAL(RCT2_ADDRESS_HINSTANCE, HINSTANCE) = hInstance;
-	RCT2_GLOBAL(RCT2_ADDRESS_CMDLINE, LPSTR) = lpCmdLine;
-	get_system_info();
-
-	audio_init();
-	audio_get_devices();
-	get_dsound_devices();
-	config_init();
-	language_open(gGeneral_config.language);
-	rct2_init();
-	Mixer_Init(NULL);
-	rct2_loop();
-	osinterface_free();
-	exit(0);
-
-	return 0;
-}
-
-void print_launch_information()
-{
-	char buffer[32];
-	time_t timer;
-	tm_t* tmInfo;
-
-	// Print version information
-	printf("Starting %s v%s\n", OPENRCT2_NAME, OPENRCT2_VERSION);
-	printf("  %s (%s)\n", OPENRCT2_PLATFORM, OPENRCT2_ARCHITECTURE);
-	printf("  %s\n\n", OPENRCT2_TIMESTAMP);
-
-	// Print current time
-	time(&timer);
-	tmInfo = localtime(&timer);
-	strftime(buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", tmInfo);
-	printf("Time: %s\n", buffer);
-
-	// TODO Print other potential information (e.g. user, hardware)
-}
-
-void rct2_loop()
-{
-	int last_tick = 0;
-
-	_finished = 0;
-	do {
-		if (SDL_GetTicks() - last_tick < 25)
-			continue;
-		last_tick = SDL_GetTicks();
-
-		osinterface_process_messages();
-		rct2_update();
-		osinterface_draw();
-	} while (!_finished);
-}
-
-void rct2_finish()
-{
-	_finished = 1;
-}
 
 void rct2_quit() {
 	if (gGeneral_config.confirmation_prompt) {
 		RCT2_GLOBAL(RCT2_ADDRESS_SAVE_PROMPT_MODE, uint16) = PM_QUIT;
 		window_save_prompt_open();
 	} else
-		rct2_finish();
+		openrct2_finish();
 }
 
-void rct2_init()
+int rct2_init()
 {
+	log_verbose("initialising game");
+
 	RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, int) = 0;
 	RCT2_GLOBAL(0x009AC310, char*) = RCT2_GLOBAL(RCT2_ADDRESS_CMDLINE, char*);
 	get_system_time();
 	RCT2_GLOBAL(0x009DEA69, short) = RCT2_GLOBAL(RCT2_ADDRESS_OS_TIME_DAY, short);
 	RCT2_GLOBAL(0x009DEA6B, short) = RCT2_GLOBAL(RCT2_ADDRESS_OS_TIME_DAY, short);
-	rct2_init_directories();
-	rct2_startup_checks();
+	if (!rct2_init_directories())
+		return 0;
+
+	if (!rct2_startup_checks())
+		return 0;
+
 	config_reset_shortcut_keys();
 	RCT2_GLOBAL(RCT2_ADDRESS_PLACE_OBJECT_MODIFIER, uint8) = 0;
-	config_load();
+	// config_load();
 	// RCT2_CALLPROC_EBPSAFE(0x00674B81); // pointless expansion pack crap
 	object_list_load();
 	scenario_load_list();
@@ -166,16 +91,14 @@ void rct2_init()
 	track_load_list(item);
 
 	gfx_load_g1();
-	//RCT2_CALLPROC_EBPSAFE(0x006C19AC); //Load character widths
 	gfx_load_character_widths();
-	
 	osinterface_init();
 	audio_init1();//RCT2_CALLPROC_EBPSAFE(0x006BA8E0); // init_audio();
 	viewport_init_all();
 	news_item_init_queue();
 	get_local_time();
 	reset_park_entrances();
-	reset_saved_strings();
+	user_string_clear_all();
 	reset_sprite_list();
 	ride_init_all();
 	window_guest_list_init_vars_a();
@@ -188,21 +111,29 @@ void rct2_init()
 	RCT2_CALLPROC_EBPSAFE(0x006DFEE4);
 	window_new_ride_init_vars();
 	window_guest_list_init_vars_b();
-	window_staff_init_vars();
+	window_staff_list_init_vars();
 
 	title_load();
 
 	gfx_clear(RCT2_ADDRESS(RCT2_ADDRESS_SCREEN_DPI, rct_drawpixelinfo), 10);
 	RCT2_GLOBAL(RCT2_ADDRESS_RUN_INTRO_TICK_PART, uint8) = gGeneral_config.play_intro ? 8 : 255;
+
+	return 1;
 }
 
-// rct2: 0x00683499
-void rct2_init_directories()
+/**
+ * 
+ *  rct2: 0x00683499
+ */
+int rct2_init_directories()
 {
 	// check install directory
-	if ( !osinterface_directory_exists(gGeneral_config.game_path) ) {
-		osinterface_show_messagebox("Invalid RCT2 installation path. Please correct in config.ini.");
-		exit(-1);
+	if (!platform_directory_exists(gGeneral_config.game_path)) {
+		log_verbose("install directory does not exist, %s", gGeneral_config.game_path);
+		if (!config_find_or_browse_install_directory()) {
+			log_fatal("Invalid RCT2 installation path. Please correct in config.ini.");
+			return 0;
+		}
 	}
 
 	strcpy(RCT2_ADDRESS(RCT2_ADDRESS_APP_PATH, char), gGeneral_config.game_path);
@@ -226,6 +157,7 @@ void rct2_init_directories()
 	strcat(RCT2_ADDRESS(RCT2_ADDRESS_TRACKS_PATH, char), "\\Tracks\\*.TD?");
 
 	strcpy(RCT2_ADDRESS(RCT2_ADDRESS_SAVED_GAMES_PATH_2, char), RCT2_ADDRESS(RCT2_ADDRESS_SAVED_GAMES_PATH, char));
+	return 1;
 }
 
 void subsitute_path(char *dest, const char *path, const char *filename)
@@ -236,19 +168,19 @@ void subsitute_path(char *dest, const char *path, const char *filename)
 	strcpy(dest, filename);
 }
 
-// rct2: 0x00674B42
-void rct2_startup_checks()
+/**
+ * 
+ *  rct2: 0x00674B42
+ */
+int rct2_startup_checks()
 {
-	// Check if game is already running
-	if (check_mutex())
-	{
-		RCT2_ERROR("Game is already running");
-		RCT2_CALLPROC_X(0x006E3838, 0x343, 0xB2B, 0, 0, 0, 0, 0); // exit_with_error
-	}
+	if (!check_file_paths())
+		return 0;
 
-	// Check data files
-	check_file_paths();
-	check_files_integrity();
+	if (!check_files_integrity())
+		return 0;
+	
+	return 1;
 }
 
 void rct2_update()
@@ -272,90 +204,56 @@ void rct2_update()
 		rct2_update_2();
 }
 
-void check_cmdline_arg()
+int rct2_open_file(const char *path)
 {
-	if(RCT2_GLOBAL(0x009AC310, uint32) == 0xFFFFFFFF)
-		return;
+	char *extension = strrchr(path, '.');
+	if (extension == NULL)
+		return 0;
+	extension++;
 
-	char *arg = RCT2_GLOBAL(0x009AC310, char *);
-	char processed_arg[255];
-	int len, i, j;
-	int quote = 0;
-	int last_period = 0;
-
-	RCT2_GLOBAL(0x009AC310, uint32) = 0xFFFFFFFF;
-	len = strlen(arg);
-
-	for(i = 0, j = 0; i < len; i ++)
-	{
-		if(arg[i] == '\"')
-		{
-			if(quote)
-				quote = 0;
-			else
-				quote = 1;
-			continue;
-		}
-		if(arg[i] == ' ' && !quote)
-			break;
-		if(arg[i] == '.')
-			last_period = i;
-		processed_arg[j ++] = arg[i];
-	}
-	processed_arg[j ++] = 0;
-
-	if (!_stricmp(processed_arg + last_period, "sv6"))
-	{
-		strcpy((char*)0x00141EF68, processed_arg);
-		game_load_save();
-	}
-	else if (!_stricmp(processed_arg + last_period, "sc6"))
-	{
-		//TODO: scenario install
-	}
-	else if (!_stricmp(processed_arg + last_period, "td6") || !_stricmp(processed_arg + last_period, "td4"))
-	{
-		//TODO: track design install
-	}
-}
-
-// rct2: 0x00407DB0
-int check_mutex()
-{
-	const char * const mutex_name = "RollerCoaster Tycoon 2_GSKMUTEX"; // rct2 @ 0x009AAC3D + 0x009A8B50
-
-	HANDLE mutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutex_name);
-
-	if (mutex != NULL)
-	{
-		// Already running
-		CloseHandle(mutex);
+	if (_stricmp(extension, "sv6") == 0) {
+		strcpy((char*)RCT2_ADDRESS_SAVED_GAMES_PATH_2, path);
+		game_load_save(path);
 		return 1;
+	} else if (_stricmp(extension, "sc6") == 0) {
+		// TODO scenario install
+		rct_scenario_basic scenarioBasic;
+		strcpy(scenarioBasic.path, path);
+		scenario_load_and_play_from_path(scenarioBasic.path);
+	} else if (_stricmp(extension, "td6") == 0 || _stricmp(extension, "td4") == 0) {
+		// TODO track design install
 	}
 
-	HANDLE status = CreateMutex(NULL, FALSE, mutex_name);
 	return 0;
 }
 
-// rct2: 0x00674C95
-void check_file_paths()
+/**
+ * 
+ *  rct2: 0x00674C95
+ */
+int check_file_paths()
 {
-	for (int pathId = 0; pathId < PATH_ID_END; pathId += 1)
-	{
-		check_file_path(pathId);
-	}
+	for (int pathId = 0; pathId < PATH_ID_END; pathId++)
+		if (!check_file_path(pathId))
+			return 0;
+
+	return 1;
 }
 
-// rct2: 0x00674CA5
-void check_file_path(int pathId)
+/**
+ * 
+ *  rct2: 0x00674CA5
+ */
+int check_file_path(int pathId)
 {
 	const char * path = get_file_path(pathId);
 	HANDLE file = CreateFile(path, FILE_GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
 
-	switch (pathId)
-	{
+	switch (pathId) {
 	case PATH_ID_GAMECFG:
 	case PATH_ID_SCORES:
+	case PATH_ID_TRACKSIDX:
+	case PATH_ID_PLUGIN:
 		// Do nothing; these will be created later if they do not exist yet
 		break;
 
@@ -378,38 +276,45 @@ void check_file_path(int pathId)
 			// the original implementation always assumes they are stored on CD-ROM.
 			// This has been removed for now for the sake of simplicity and could be added
 			// later in a more convenient way using the INI file.
-			RCT2_ERROR("Could not find file %s", path);
-			RCT2_CALLPROC_X(0x006E3838, 0x343, 0x337, 0, 0, 0, 0, 0); // exit_with_error
+			log_fatal("Could not find file %s", path);
+			return 0;
 		}
 		break;
 	}
 
 	if (file != INVALID_HANDLE_VALUE)
 		CloseHandle(file);
+
+	return 1;
 }
 
-// rct2: 0x00674C0B
-void check_files_integrity()
+/**
+ * 
+ *  rct2: 0x00674C0B
+ */
+int check_files_integrity()
 {
-	int i = 0;
-	while (files_to_check[i].pathId != PATH_ID_END)
-	{
-		WIN32_FIND_DATA find_data;
-		const char * path = get_file_path(files_to_check[i].pathId);
-		HANDLE file = FindFirstFile(path, &find_data);
+	int i;
+	const char *path;
+	HANDLE file;
+	WIN32_FIND_DATA find_data;
 
-		if (file == INVALID_HANDLE_VALUE || find_data.nFileSizeLow != files_to_check[i].fileSize)
-		{
+	for (i = 0; files_to_check[i].pathId != PATH_ID_END; i++) {
+		path = get_file_path(files_to_check[i].pathId);
+		file = FindFirstFile(path, &find_data);
+
+		if (file == INVALID_HANDLE_VALUE || find_data.nFileSizeLow != files_to_check[i].fileSize) {
 			if (file != INVALID_HANDLE_VALUE)
 				FindClose(file);
-			RCT2_ERROR("Integrity check failed for %s", path);
-			RCT2_CALLPROC_X(0x006E3838, 0x343, 0x337, 0, 0, 0, 0, 0); // exit_with_error
+
+			log_fatal("Integrity check failed for %s", path);
+			return 0;
 		}
 
 		FindClose(file);
-
-		i += 1;
 	}
+
+	return 1;
 }
 
 void rct2_update_2()
@@ -434,7 +339,7 @@ void rct2_update_2()
 
 	// TODO: screenshot countdown process
 
-	check_cmdline_arg();
+	// check_cmdline_arg();
 	// Screens
 	if (RCT2_GLOBAL(RCT2_ADDRESS_RUN_INTRO_TICK_PART, uint8) != 0)
 		intro_update();

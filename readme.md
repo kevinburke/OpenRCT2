@@ -1,11 +1,13 @@
 # OpenRCT2
 An open source clone of RollerCoaster Tycoon 2 built by decompiling the original game one bit at a time.
-- [Screenshot 1, cheats window](http://dev.intelorca.co.uk/2014/openrct2/cheats.png)
-- [Screenshot 2, large land tool area](http://i.imgur.com/kTkK5Gw.png)
+- [Screenshot 1, cheat windows](http://imgur.com/a/zJTYd)
+- [Screenshot 2, large land tool area](http://i.imgur.com/kTkK5Gw.png) (up to 64 squares at once)
 - [Screenshot 3, high resolution](http://i.imgur.com/yFzNyVu.jpg)
 - [Screenshot 4, resizable window](http://imgur.com/a/3GDuT)
 
 [![Build Status](https://travis-ci.org/IntelOrca/OpenRCT2.svg)](https://travis-ci.org/IntelOrca/OpenRCT2)
+
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/IntelOrca/OpenRCT2?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Contents
 - 1 - [Introduction](#1-introduction)
@@ -13,7 +15,7 @@ An open source clone of RollerCoaster Tycoon 2 built by decompiling the original
   - 1.2 - [Decompiling the game](#12-decompiling-the-game)
   - 1.3 - [Progress](#13-progress)
   - 1.4 - [Aim](#14-aim) 
-- 2 - [Building the source code](#2-building-the-source-code)
+- 2 - [Downloading the game / Building the source code](#2-building-the-source-code)
   - 2.1 - [Prerequisites](#21-prerequisites)
   - 2.2 - [Compiling and running](#22-compiling-and-running)
 - 3 - [Contributing](#3-contributing)
@@ -51,9 +53,9 @@ The aim is to completely decompile RollerCoaster Tycoon 2 into C so that cross-p
   - Finish building five coasters objective
   - Using the mountain tool during the game
 
-# 2 Building the source code
+# 2 Downloading the game / Building the source code
 
-Alternatively, a third-party offers [downloadable precompiled builds](https://openrct2.com/download). However, building the project is always recommended.
+A third-party offers [downloadable precompiled builds](https://openrct2.com/download). However, building the project is always recommended.
 
 ## 2.1 Prerequisites
 ### Windows:
@@ -67,7 +69,7 @@ Alternatively, a third-party offers [downloadable precompiled builds](https://op
 - RollerCoaster Tycoon 2
 
 ### Mac OS X / Linux:
-- [MinGW-w64](mingw-w64.sourceforge.net)
+- [MinGW-w64](http://mingw-w64.sourceforge.net/)
 - [Wine](http://www.winehq.org)
 - RollerCoaster Tycoon 2
 - libsdl2 compiled with MinGW-w64
@@ -75,7 +77,7 @@ Alternatively, a third-party offers [downloadable precompiled builds](https://op
 ## 2.2 Compiling and running
 ### Windows:
 1. Check out the repository. This can be done using [GitHub Windows](https://windows.github.com/) or [other tools](https://help.github.com/articles/which-remote-url-should-i-use).
-2. Download the [SDL2 development library for Visual C++]((http://www.libsdl.org/release/SDL2-devel-2.0.3-VC.zip)) and copy it to a new directory called "sdl" in the repository. This directory should contain "include". The path should resemble ```\OpenRCT2\sdl\include\```.
+2. Download the [SDL2 development library for Visual C++]((http://www.libsdl.org/release/SDL2-devel-2.0.3-VC.zip)) and copy it to a new directory called "sdl" in the repository. This directory should contain "include". The path should resemble ```\OpenRCT2\lib\sdl\include\```.
 3. Open the solution in the projects directory (**openrct2.sln**) with Visual Studio.
 4. [Select the 'Release' configuration](http://msdn.microsoft.com/en-us/library/wx0123s5.aspx) and click Build -> Rebuild Solution. The dropdown menu to enable the 'release' configuration is towards the top of the VS Express window, near the "TEST" menu.
 5. Start debugging. Press the "Local Windows Debugger" button with a green "play" icon next to it. If Visual Studio shows a warning about *openrct2.exe* not having debug information, press Continue.

@@ -21,8 +21,7 @@
 #ifndef _OBJECT_H_
 #define _OBJECT_H_
 
-#include <stdio.h>
-#include "rct2.h"
+#include "common.h"
 
 /**
  * Object entry structure.
@@ -49,11 +48,12 @@ extern int object_entry_group_counts[];
 extern int object_entry_group_encoding[];
 
 void object_list_load();
+void set_load_objects_fail_reason();
 int object_read_and_load_entries(FILE *file);
 int object_load_packed(FILE *file);
 void object_unload_all();
 
-int object_load(int groupIndex, rct_object_entry *entry);
+int object_load(int groupIndex, rct_object_entry *entry, int* chunk_size);
 void object_unload(int groupIndex, rct_object_entry_extended *entry);
 int object_get_scenario_text(rct_object_entry *entry);
 void object_free_scenario_text();
@@ -61,5 +61,6 @@ int object_get_length(rct_object_entry *entry);
 rct_object_entry *object_get_next(rct_object_entry *entry);
 int object_calculate_checksum(rct_object_entry *entry, char *data, int dataLength);
 int object_paint(int type, int eax, int ebx, int ecx, int edx, int esi, int edi, int ebp);
+int sub_6A9F42(FILE *file, rct_object_entry* entry);
 
 #endif
